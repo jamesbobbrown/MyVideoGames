@@ -1,4 +1,5 @@
-# MyVideoGames
+# My Video Game Tracker 🎮
+
 A web app to track the videogames you played, want to play, and rate them.
 
 ## Features
