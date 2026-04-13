@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Lists - My Video Game List</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <header class="navbar">
+    <div class="logo">🎮 MyVideoGameList</div>
+
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="library.html" class="active">My Lists</a>
+      <a href="news.html">News</a>
+      <a href="login.html" id="navAuthLink">Login</a>
+    </nav>
+  </header>
+
+  <main class="page-container">
+    <section class="page-intro">
+      <h1>My Lists</h1>
+      <p>Manage your played games, backlog and favourites.</p>
+      <p id="welcomeUser" class="welcome-user"></p>
+    </section>
+
+    <section class="section">
+      <div class="section-header">
+        <h2>Add game quickly</h2>
+        <p>This is a frontend simulation using localStorage</p>
+      </div>
+
+      <form id="quickAddForm" class="quick-form">
+        <input type="text" id="gameTitle" placeholder="Game title" required />
+        <select id="gameStatus" required>
+          <option value="">Select status</option>
+          <option value="played">Played</option>
+          <option value="toplay">To Play</option>
+          <option value="favorite">Favorite</option>
+        </select>
+        <input type="number" id="gameRating" min="1" max="10" placeholder="Rating 1-10" />
+        <button type="submit" class="btn btn-primary">Add game</button>
+      </form>
+    </section>
+
+    <section class="section">
+      <div class="section-header">
+        <h2>✅ Played</h2>
+      </div>
+      <div id="playedList" class="simple-list"></div>
+    </section>
+
+    <section class="section">
+      <div class="section-header">
+        <h2>🕹️ To Play</h2>
+      </div>
+      <div id="toPlayList" class="simple-list"></div>
+    </section>
+
+    <section class="section">
+      <div class="section-header">
+        <h2>💜 Favorites</h2>
+      </div>
+      <div id="favoriteList" class="simple-list"></div>
+    </section>
+  </main>
+
+  <script src="js/library.js"></script>
+</body>
+</html>

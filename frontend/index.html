@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Video Game List</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <header class="navbar">
+    <div class="logo">🎮 MyVideoGameList</div>
+
+    <nav>
+      <a href="index.html" class="active">Home</a>
+      <a href="library.html">My Lists</a>
+      <a href="news.html">News</a>
+      <a href="login.html" id="navAuthLink">Login</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="hero-overlay"></div>
+      <div class="hero-content">
+        <p class="hero-tag">Track, rate and discover</p>
+        <h1>Your personal video game tracker</h1>
+        <p class="hero-text">
+          Save the games you played, the ones you want to play, rate them,
+          comment on them and unlock achievements.
+        </p>
+        <div class="hero-buttons">
+          <a href="library.html" class="btn btn-primary">Go to My Lists</a>
+          <a href="login.html" class="btn btn-secondary">Create account</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-header">
+        <h2>🔥 Trending games</h2>
+        <p>Popular titles people are talking about</p>
+      </div>
+      <div id="trendingGames" class="card-grid"></div>
+    </section>
+
+    <section class="section">
+      <div class="section-header">
+        <h2>⭐ Top rated</h2>
+        <p>Best rated games in the community</p>
+      </div>
+      <div id="topRatedGames" class="card-grid"></div>
+    </section>
+
+    <section class="section">
+      <div class="section-header">
+        <h2>🏆 Achievements preview</h2>
+        <p>Example achievements you could unlock</p>
+      </div>
+
+      <div class="achievement-grid">
+        <div class="achievement-card">
+          <h3>Souls Player 🙂</h3>
+          <p>Play 5 soulslike games</p>
+        </div>
+        <div class="achievement-card">
+          <h3>Backlog Survivor</h3>
+          <p>Finish 10 games from your “to play” list</p>
+        </div>
+        <div class="achievement-card">
+          <h3>Reviewer</h3>
+          <p>Write 15 reviews or comments</p>
+        </div>
+        <div class="achievement-card">
+          <h3>Indie Lover</h3>
+          <p>Add 8 indie games to your favourites</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
