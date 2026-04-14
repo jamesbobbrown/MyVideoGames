@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebApi.Data;
 using WebApi.DTOs;
+using System.Text.Json;
 
 namespace WebApi.Controllers;
 
@@ -10,10 +11,17 @@ namespace WebApi.Controllers;
 public class VideojuegoController : ControllerBase
 {
     private readonly AppDbContext _context;
+    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly IConfiguration _configuration;
 
-    public VideojuegoController(AppDbContext context)
+    public VideojuegoController(
+        AppDbContext context,
+        IHttpClientFactory httpClientFactory,
+        IConfiguration configuration)
     {
         _context = context;
+        _httpClientFactory = httpClientFactory;
+        _configuration = configuration;
     }
 
     [HttpPost("add")]
@@ -83,5 +91,69 @@ public class VideojuegoController : ControllerBase
         await _context.SaveChangesAsync();
 
         return Ok("Game deleted successfully.");
+    }
+    [HttpGet("searchExternal")]
+    public async Task<IActionResult> SearchExternal([FromQuery] string query)
+    {
+        if (string.IsNullOrWhiteSpace(query))
+            return BadRequest("Query is required.");
+
+        string? apiKey = _configuration["Rawg:ApiKey"];
+        if (string.IsNullOrWhiteSpace(apiKey))
+            return StatusCode(500, "RAWG API key is not configured.");
+
+        var client = _httpClientFactory.CreateClient();
+
+        string url =
+            $"https://api.rawg.io/api/games?key={apiKey}&search={Uri.EscapeDataString(query)}&search_precise=true&page_size=10";
+
+        var response = await client.GetAsync(url);
+
+        if (!response.IsSuccessStatusCode)
+            return StatusCode((int)response.StatusCode, "RAWG request failed.");
+
+        var json = await response.Content.ReadAsStringAsync();
+
+        var options = new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        };
+
+        var rawgResponse = JsonSerializer.Deserialize<RawgListResponseDTO>(json, options);
+
+        if (rawgResponse == null)
+            return Ok(new List<RawgGameDTO>());
+
+        return Ok(rawgResponse.results);
+    }
+    [HttpGet("getExternalById")]
+    public async Task<IActionResult> GetExternalById([FromQuery] int rawgId)
+    {
+        string? apiKey = _configuration["Rawg:ApiKey"];
+        if (string.IsNullOrWhiteSpace(apiKey))
+            return StatusCode(500, "RAWG API key is not configured.");
+
+        var client = _httpClientFactory.CreateClient();
+
+        string url = $"https://api.rawg.io/api/games/{rawgId}?key={apiKey}";
+
+        var response = await client.GetAsync(url);
+
+        if (!response.IsSuccessStatusCode)
+            return StatusCode((int)response.StatusCode, "RAWG request failed.");
+
+        var json = await response.Content.ReadAsStringAsync();
+
+        var options = new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        };
+
+        var game = JsonSerializer.Deserialize<RawgGameDetailDTO>(json, options);
+
+        if (game == null)
+            return NotFound("Game not found in RAWG.");
+
+        return Ok(game);
     }
 }

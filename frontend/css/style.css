@@ -44,11 +44,104 @@
     justify-content: space-between;
     align-items: center;
   }
+  .game-search-box {
+    position: relative;
+    margin-bottom: 18px;
+  }
   
+  .game-search-box input {
+    width: 100%;
+    background: #111520;
+    border: 1px solid var(--border);
+    color: white;
+    border-radius: 12px;
+    padding: 13px 14px;
+    outline: none;
+  }
+  
+  .search-results {
+    position: absolute;
+    width: 100%;
+    top: calc(100% + 8px);
+    left: 0;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    z-index: 50;
+    display: none;
+    max-height: 340px;
+    overflow-y: auto;
+  }
+  
+  .search-result-item {
+    display: flex;
+    gap: 12px;
+    padding: 12px;
+    cursor: pointer;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+  
+  .search-result-item:last-child {
+    border-bottom: none;
+  }
+  
+  .search-result-item:hover {
+    background: var(--card-hover);
+  }
+  
+  .search-result-item img {
+    width: 64px;
+    height: 64px;
+    object-fit: cover;
+    border-radius: 10px;
+    flex-shrink: 0;
+  }
+  
+  .search-result-text h4 {
+    margin-bottom: 4px;
+    font-size: 0.98rem;
+  }
+  
+  .search-result-text p {
+    color: var(--muted);
+    font-size: 0.88rem;
+    line-height: 1.4;
+  }
+  
+  .selected-game-preview {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 16px;
+    margin-bottom: 18px;
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+  }
+  
+  .selected-game-preview img {
+    width: 140px;
+    height: 90px;
+    object-fit: cover;
+    border-radius: 12px;
+  }
+  
+  .selected-game-preview h3 {
+    margin-bottom: 8px;
+  }
+  
+  .selected-game-preview p {
+    color: var(--muted);
+    line-height: 1.5;
+    font-size: 0.95rem;
+  }
   .logo {
     font-size: 1.3rem;
     font-weight: bold;
     color: white;
+    text-decoration: none;
   }
   
   .navbar nav {
