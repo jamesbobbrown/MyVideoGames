@@ -17,66 +17,74 @@ public class UsuarioController : ControllerBase
     }
 
     [HttpPost("register")]
-    public async Task<IActionResult> Register([FromBody] RequestDTO<UsuarioDTO> req)
+    public async Task<ActionResult<UsuarioDTO>> Register([FromBody] UsuarioDTO dto)
     {
-        if (req.Data == null)
-            return BadRequest("No user data received.");
-
-        if (string.IsNullOrWhiteSpace(req.Data.Username) ||
-            string.IsNullOrWhiteSpace(req.Data.Email) ||
-            string.IsNullOrWhiteSpace(req.Data.Password))
+        if (string.IsNullOrWhiteSpace(dto.Username) ||
+            string.IsNullOrWhiteSpace(dto.Email) ||
+            string.IsNullOrWhiteSpace(dto.Password))
         {
             return BadRequest("Username, email and password are required.");
         }
 
-        bool exists = await _context.TA_USUARIO.AnyAsync(u =>
-            u.USERNAME == req.Data.Username || u.EMAIL == req.Data.Email);
+        bool emailExists = await _context.TA_USUARIO
+            .AnyAsync(u => u.EMAIL == dto.Email);
 
-        if (exists)
-            return BadRequest("Username or email already exists.");
-
-        TA_USUARIO nuevoUsuario = new()
+        if (emailExists)
         {
-            USERNAME = req.Data.Username,
-            EMAIL = req.Data.Email,
-            PASSWORD = req.Data.Password,
+            return BadRequest("This email is already registered.");
+        }
+
+        var usuario = new TA_USUARIO
+        {
+            USERNAME = dto.Username,
+            EMAIL = dto.Email,
+            PASSWORD = dto.Password,
             FECHA_REGISTRO = DateTime.Now
         };
 
-        _context.TA_USUARIO.Add(nuevoUsuario);
+        _context.TA_USUARIO.Add(usuario);
         await _context.SaveChangesAsync();
 
-        UsuarioDTO result = new()
+        return Ok(new UsuarioDTO
         {
-            Id = nuevoUsuario.ID,
-            Username = nuevoUsuario.USERNAME,
-            Email = nuevoUsuario.EMAIL
-        };
-
-        return Ok(result);
+            Id = usuario.ID,
+            Username = usuario.USERNAME,
+            Email = usuario.EMAIL
+        });
     }
 
     [HttpPost("login")]
-    public async Task<IActionResult> Login([FromBody] RequestDTO<UsuarioDTO> req)
+    public async Task<ActionResult<UsuarioDTO>> Login([FromBody] UsuarioDTO dto)
     {
-        if (req.Data == null)
-            return BadRequest("No login data received.");
-
-        TA_USUARIO? user = await _context.TA_USUARIO.FirstOrDefaultAsync(u =>
-            u.USERNAME == req.Data.Username &&
-            u.PASSWORD == req.Data.Password);
-
-        if (user == null)
-            return Unauthorized("Invalid username or password.");
-
-        UsuarioDTO result = new()
+        if ((string.IsNullOrWhiteSpace(dto.Email) && string.IsNullOrWhiteSpace(dto.Username)) ||
+            string.IsNullOrWhiteSpace(dto.Password))
         {
-            Id = user.ID,
-            Username = user.USERNAME,
-            Email = user.EMAIL
-        };
+            return BadRequest("Username/email and password are required.");
+        }
 
-        return Ok(result);
+        string loginValue = !string.IsNullOrWhiteSpace(dto.Email)
+            ? dto.Email
+            : dto.Username!;
+
+        var usuario = await _context.TA_USUARIO
+            .Where(u =>
+                (u.EMAIL == loginValue || u.USERNAME == loginValue) &&
+                u.PASSWORD == dto.Password
+            )
+            .Select(u => new UsuarioDTO
+            {
+                Id = u.ID,
+                Username = u.USERNAME,
+                Email = u.EMAIL
+            })
+            .FirstOrDefaultAsync();
+
+        if (usuario == null)
+        {
+            return Unauthorized("Invalid username/email or password.");
+        }
+
+        return Ok(usuario);
     }
 
     [HttpGet("getList")]
