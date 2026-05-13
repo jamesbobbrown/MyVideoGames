@@ -14,3 +14,10 @@ backend/WebApi/*.db-wal
 # User/editor files
 .vs/
 .vscode/
+
+backend/WebApi/appsettings.Development.json
+
+# SQLite local database
+*.db
+*.db-shm
+*.db-wal

@@ -7,17 +7,17 @@
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
-  <header class="navbar">
-    <a href="index.html" class="logo">🎮 MyVideoGameList</a>
+  <header class="site-header">
+    <a href="index.html" class="logo">MyVideoGames</a>
 
-    <nav>
-      <a href="index.html">Home</a>
-      <a href="library.html">My Lists</a>
-      <a href="news.html" class="active">News</a>
-      <a href="login.html" id="navAuthLink">Login</a>
+    <nav class="main-nav">
+        <a href="index.html">Home</a>
+        <a href="news.html">News</a>
+        <a href="library.html">Library</a>
     </nav>
-  </header>
 
+    <div id="user-menu-container"></div>
+</header>
   <main class="page-container">
     <section class="page-intro">
       <h1>Gaming News</h1>
@@ -27,6 +27,8 @@
     <section id="newsContainer" class="news-grid"></section>
   </main>
 
+  
+  <script src="js/auth.js"></script>
   <script src="js/news.js"></script>
 </body>
 </html>
