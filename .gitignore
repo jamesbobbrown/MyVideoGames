@@ -17,7 +17,3 @@ backend/WebApi/*.db-wal
 
 backend/WebApi/appsettings.Development.json
 
-# SQLite local database
-*.db
-*.db-shm
-*.db-wal
