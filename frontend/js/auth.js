@@ -77,7 +77,7 @@ async function handleRegister(e) {
 
       registerMessage.textContent = "Account created successfully. Redirecting...";
       registerMessage.style.color = "#2dd4bf";
-
+      
       setTimeout(() => {
           window.location.href = "index.html";
       }, 800);
@@ -107,7 +107,7 @@ async function handleLogin(e) {
 
       loginMessage.textContent = "Login successful. Redirecting...";
       loginMessage.style.color = "#2dd4bf";
-
+      
       setTimeout(() => {
           window.location.href = "index.html";
       }, 800);

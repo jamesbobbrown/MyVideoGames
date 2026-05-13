@@ -43,6 +43,10 @@ async function getHomeCategories() {
     return await apiRequest(endpoint, "GET");
 }
 
+async function getRawgGameDetail(rawgId) {
+    return await apiRequest(`/Videojuego/getExternalById?rawgId=${rawgId}`, "GET");
+}
+
 async function addRawgGameToMyList(game) {
     const user = getLoggedUser();
 
@@ -51,19 +55,20 @@ async function addRawgGameToMyList(game) {
         return;
     }
 
-    /*
-        Primero guardamos el videojuego en nuestra base de datos.
-        Después lo añadimos a la lista del usuario.
-    */
+    const releaseDate =
+        game.fechaLanzamiento ||
+        game.FechaLanzamiento ||
+        game.released ||
+        null;
 
     const savedGame = await apiRequest("/Videojuego/add", "POST", {
         data: {
-            titulo: game.titulo || game.Titulo,
-            genero: game.genero || game.Genero || "Unknown genre",
-            plataforma: "PC",
-            fechaLanzamiento: game.fechaLanzamiento || game.FechaLanzamiento || null,
-            imagenUrl: game.imagenUrl || game.ImagenUrl || "",
-            rawgId: game.rawgId || game.RawgId
+            titulo: game.titulo || game.Titulo || game.name,
+            genero: game.genero || game.Genero || getFirstGenreFromRawg(game) || "Unknown genre",
+            plataforma: game.plataforma || game.Plataforma || getPlatformsFromRawg(game) || "Unknown platform",
+            fechaLanzamiento: formatDateForBackend(releaseDate),
+            imagenUrl: game.imagenUrl || game.ImagenUrl || game.background_image || "",
+            rawgId: game.rawgId || game.RawgId || game.id
         },
         pagination: null,
         filters: []
@@ -75,10 +80,46 @@ async function addRawgGameToMyList(game) {
         data: {
             usuarioId: user.id,
             videojuegoId: videojuegoId,
-            estado: "Plan to play",
+
+            // IMPORTANT:
+            // This must match your Library filters.
+            estado: "toplay",
+
             puntuacion: null
         },
         pagination: null,
         filters: []
     });
+}
+
+function formatDateForBackend(dateValue) {
+    if (!dateValue) {
+        return null;
+    }
+
+    if (dateValue.includes("T")) {
+        return dateValue;
+    }
+
+    return `${dateValue}T00:00:00`;
+}
+
+function getFirstGenreFromRawg(game) {
+    if (game.genres && game.genres.length > 0) {
+        return game.genres[0].name;
+    }
+
+    return null;
+}
+
+function getPlatformsFromRawg(game) {
+    if (!game.platforms || game.platforms.length === 0) {
+        return null;
+    }
+
+    return game.platforms
+        .slice(0, 3)
+        .map((p) => p.platform?.name)
+        .filter(Boolean)
+        .join(", ");
 }

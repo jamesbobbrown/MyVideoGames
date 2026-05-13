@@ -145,7 +145,7 @@ public class VideojuegoController : ControllerBase
             {
                 Titulo = "Top rated games",
                 Juegos = await GetRawgGamesForHome(
-                    $"https://api.rawg.io/api/games?key={apiKey}&ordering=-rating&page_size=5",
+                    $"https://api.rawg.io/api/games?key={apiKey}&ordering=-rating&page_size=40",
                     usuarioId
                 )
             },
@@ -153,7 +153,7 @@ public class VideojuegoController : ControllerBase
             {
                 Titulo = "Popular games",
                 Juegos = await GetRawgGamesForHome(
-                    $"https://api.rawg.io/api/games?key={apiKey}&ordering=-added&page_size=5",
+                    $"https://api.rawg.io/api/games?key={apiKey}&ordering=-added&page_size=40",
                     usuarioId
                 )
             },
@@ -161,7 +161,7 @@ public class VideojuegoController : ControllerBase
             {
                 Titulo = "New releases",
                 Juegos = await GetRawgGamesForHome(
-                    $"https://api.rawg.io/api/games?key={apiKey}&ordering=-released&page_size=5",
+                    $"https://api.rawg.io/api/games?key={apiKey}&ordering=-released&page_size=40",
                     usuarioId
                 )
             }
@@ -218,19 +218,23 @@ public class VideojuegoController : ControllerBase
 
         var json = await response.Content.ReadAsStringAsync();
 
-        var options = new JsonSerializerOptions
-        {
-            PropertyNameCaseInsensitive = true
-        };
+        using var document = JsonDocument.Parse(json);
 
-        var rawgResponse = JsonSerializer.Deserialize<RawgListResponseDTO>(json, options);
-
-        if (rawgResponse == null)
+        if (!document.RootElement.TryGetProperty("results", out var results))
         {
-            return Ok(new List<RawgGameDTO>());
+            return Ok(new List<object>());
         }
 
-        return Ok(rawgResponse.results);
+        var cleanResults = results
+            .EnumerateArray()
+            .Where(x =>
+                x.TryGetProperty("background_image", out var img) &&
+                !string.IsNullOrWhiteSpace(img.GetString())
+            )
+            .Select(x => x.Clone())
+            .ToList();
+
+        return Ok(cleanResults);
     }
 
     [HttpGet("getExternalById")]
@@ -256,19 +260,7 @@ public class VideojuegoController : ControllerBase
 
         var json = await response.Content.ReadAsStringAsync();
 
-        var options = new JsonSerializerOptions
-        {
-            PropertyNameCaseInsensitive = true
-        };
-
-        var game = JsonSerializer.Deserialize<RawgGameDetailDTO>(json, options);
-
-        if (game == null)
-        {
-            return NotFound("Game not found in RAWG.");
-        }
-
-        return Ok(game);
+        return Content(json, "application/json");
     }
 
     private async Task<List<RawgHomeGameDTO>> GetRawgGamesForHome(string url, int? usuarioId)
@@ -289,6 +281,7 @@ public class VideojuegoController : ControllerBase
         var results = document.RootElement.GetProperty("results");
 
         var games = new List<RawgHomeGameDTO>();
+        var usedTitles = new HashSet<string>();
 
         foreach (var item in results.EnumerateArray())
         {
@@ -301,6 +294,20 @@ public class VideojuegoController : ControllerBase
             string imagenUrl = item.TryGetProperty("background_image", out var imageProp)
                 ? imageProp.GetString() ?? string.Empty
                 : string.Empty;
+
+            if (string.IsNullOrWhiteSpace(titulo) || string.IsNullOrWhiteSpace(imagenUrl))
+            {
+                continue;
+            }
+
+            string normalizedTitle = NormalizeGameTitle(titulo);
+
+            if (usedTitles.Contains(normalizedTitle))
+            {
+                continue;
+            }
+
+            usedTitles.Add(normalizedTitle);
 
             double? rating = null;
 
@@ -355,8 +362,68 @@ public class VideojuegoController : ControllerBase
                 FechaLanzamiento = fecha,
                 YaAnadido = yaAnadido
             });
+
+            if (games.Count >= 20)
+            {
+                break;
+            }
         }
 
         return games;
+    }
+    private static string NormalizeGameTitle(string title)
+    {
+        string normalized = title.ToLowerInvariant();
+
+        string[] removableParts =
+        {
+            "complete edition",
+            "game of the year edition",
+            "goty edition",
+            "definitive edition",
+            "deluxe edition",
+            "ultimate edition",
+            "standard edition",
+            "collector's edition",
+            "collectors edition",
+            "remastered",
+            "remaster",
+            "enhanced edition",
+            "anniversary edition",
+            "director's cut",
+            "directors cut",
+            "blood and wine",
+            "hearts of stone"
+        };
+
+        foreach (var part in removableParts)
+        {
+            normalized = normalized.Replace(part, "");
+        }
+
+        char[] separators = { ':', '–', '-', '—', '|', '(', '[', '{' };
+
+        foreach (char separator in separators)
+        {
+            int index = normalized.IndexOf(separator);
+
+            if (index > 0)
+            {
+                normalized = normalized[..index];
+            }
+        }
+
+        normalized = new string(
+            normalized
+                .Where(c => char.IsLetterOrDigit(c) || char.IsWhiteSpace(c))
+                .ToArray()
+        );
+
+        normalized = string.Join(
+            " ",
+            normalized.Split(" ", StringSplitOptions.RemoveEmptyEntries)
+        );
+
+        return normalized.Trim();
     }
 }
