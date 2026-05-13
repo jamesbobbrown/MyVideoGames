@@ -7,76 +7,93 @@
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
-  <header class="navbar">
-    <a href="index.html" class="logo">🎮 MyVideoGameList</a>
+  <header class="site-header">
+    <a href="index.html" class="logo">MyVideoGames</a>
 
-    <nav>
+    <nav class="main-nav">
       <a href="index.html">Home</a>
-      <a href="library.html" class="active">My Lists</a>
       <a href="news.html">News</a>
-      <a href="login.html" id="navAuthLink">Login</a>
+      <a href="library.html" class="active">Library</a>
     </nav>
+
+    <div id="user-menu-container"></div>
   </header>
 
-  <main class="page-container">
-    <section class="page-intro">
-      <h1>My Lists</h1>
-      <p>Manage your played games, backlog and favourites.</p>
-      <p id="welcomeUser" class="welcome-user"></p>
+  <main class="library-page">
+    <section class="library-hero">
+      <div>
+        <p class="hero-kicker">Your collection</p>
+        <h1>My Lists</h1>
+        <p>Search real games from RAWG, add them to your personal library and organize them by status.</p>
+        <p id="welcomeUser" class="welcome-user"></p>
+      </div>
     </section>
 
-    <section class="section">
-      <div class="section-header">
-        <h2>Add game</h2>
-        <p>Search a real game from RAWG and add it to one of your lists</p>
-      </div>
-    
-      <div class="game-search-box">
-        <input type="text" id="gameSearchInput" placeholder="Search for a game..." autocomplete="off" />
-        <div id="searchResults" class="search-results"></div>
-      </div>
-    
-      <div id="selectedGamePreview" class="selected-game-preview" style="display: none;"></div>
-    
-      <form id="quickAddForm" class="quick-form">
-        <input type="hidden" id="selectedGameId" />
-        <input type="hidden" id="selectedGameTitle" />
-    
-        <select id="gameStatus" required>
-          <option value="">Select status</option>
-          <option value="played">Played</option>
-          <option value="toplay">To Play</option>
-          <option value="favorite">Favorite</option>
-        </select>
-    
-        <input type="number" id="gameRating" min="1" max="10" placeholder="Rating 1-10" />
-    
-        <button type="submit" class="btn btn-primary">Add game</button>
-      </form>
-    </section>
+    <section class="library-layout">
+      <section class="library-panel add-game-panel">
+        <div class="section-header">
+          <h2>Add game</h2>
+          <p>Search by title. Results are ordered by popularity when possible.</p>
+        </div>
 
-    <section class="section">
-      <div class="section-header">
-        <h2>✅ Played</h2>
-      </div>
-      <div id="playedList" class="simple-list"></div>
-    </section>
+        <div class="game-search-box">
+          <label for="gameSearchInput">Search game</label>
+          <input type="text" id="gameSearchInput" placeholder="Example: Elden Ring, Minecraft, Hollow Knight..." autocomplete="off" />
+          <div id="searchResults" class="search-results"></div>
+        </div>
 
-    <section class="section">
-      <div class="section-header">
-        <h2>🕹️ To Play</h2>
-      </div>
-      <div id="toPlayList" class="simple-list"></div>
-    </section>
+        <div id="selectedGamePreview" class="selected-game-preview" style="display: none;"></div>
 
-    <section class="section">
-      <div class="section-header">
-        <h2>💜 Favorites</h2>
-      </div>
-      <div id="favoriteList" class="simple-list"></div>
+        <form id="quickAddForm" class="quick-form library-add-form">
+          <input type="hidden" id="selectedGameId" />
+          <input type="hidden" id="selectedGameTitle" />
+
+          <div class="form-field">
+            <label for="gameStatus">Status</label>
+            <select id="gameStatus" required>
+              <option value="">Select status</option>
+              <option value="played">Played</option>
+              <option value="toplay">To Play</option>
+              <option value="favorite">Favorite</option>
+            </select>
+          </div>
+
+          <div class="form-field">
+            <label for="gameRating">Rating</label>
+            <input type="number" id="gameRating" min="1" max="10" placeholder="1-10" />
+          </div>
+
+          <button type="submit" class="btn btn-primary library-add-button">Add game</button>
+        </form>
+      </section>
+
+      <section class="library-panel">
+        <div class="section-header">
+          <h2>✅ Played</h2>
+          <p>Games you have finished or already played.</p>
+        </div>
+        <div id="playedList" class="simple-list"></div>
+      </section>
+
+      <section class="library-panel">
+        <div class="section-header">
+          <h2>🕹️ To Play</h2>
+          <p>Your backlog and future games.</p>
+        </div>
+        <div id="toPlayList" class="simple-list"></div>
+      </section>
+
+      <section class="library-panel">
+        <div class="section-header">
+          <h2>💜 Favorites</h2>
+          <p>Your favourite games.</p>
+        </div>
+        <div id="favoriteList" class="simple-list"></div>
+      </section>
     </section>
   </main>
 
+  <script src="js/auth.js"></script>
   <script src="js/api.js"></script>
   <script src="js/library.js"></script>
 </body>
