@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Browse Games - MyVideoGames</title>
+
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <header class="site-header">
+        <a href="index.html" class="logo">MyVideoGames</a>
+
+        <nav class="main-nav">
+            <a href="index.html">Home</a>
+            <a href="news.html">News</a>
+            <a href="library.html">Library</a>
+        </nav>
+
+        <div id="user-menu-container"></div>
+    </header>
+
+    <main class="category-page">
+        <section class="category-page-hero">
+            <a href="index.html" class="back-link">← Back to home</a>
+
+            <p class="hero-kicker">Browse games</p>
+            <h1 id="categoryTitle">Games</h1>
+            <p>
+                Explore more games from RAWG. Filter by name, genre and rating.
+            </p>
+        </section>
+
+        <section class="category-filter-panel">
+            <div class="category-filters">
+                <div class="form-field">
+                    <label for="categorySearchInput">Search by name</label>
+                    <input type="text" id="categorySearchInput" placeholder="Example: Elden Ring..." />
+                </div>
+
+                <div class="form-field">
+                    <label for="categoryGenreSelect">Genre</label>
+                    <select id="categoryGenreSelect">
+                        <option value="">All genres</option>
+                        <option value="action">Action</option>
+                        <option value="adventure">Adventure</option>
+                        <option value="rpg">RPG</option>
+                        <option value="shooter">Shooter</option>
+                        <option value="indie">Indie</option>
+                        <option value="strategy">Strategy</option>
+                        <option value="sports">Sports</option>
+                        <option value="racing">Racing</option>
+                        <option value="simulation">Simulation</option>
+                        <option value="puzzle">Puzzle</option>
+                        <option value="platformer">Platformer</option>
+                    </select>
+                </div>
+
+                <div class="form-field">
+                    <label for="categoryRatingSelect">Minimum rating</label>
+                    <select id="categoryRatingSelect">
+                        <option value="">Any rating</option>
+                        <option value="2">2+</option>
+                        <option value="3">3+</option>
+                        <option value="3.5">3.5+</option>
+                        <option value="4">4+</option>
+                        <option value="4.5">4.5+</option>
+                    </select>
+                </div>
+
+                <button type="button" class="btn btn-primary" id="applyCategoryFilters">
+                    Apply filters
+                </button>
+            </div>
+        </section>
+
+        <section class="category-results-section">
+            <div id="categoryGamesContainer" class="category-games-grid">
+                <p class="loading-message">Loading games...</p>
+            </div>
+
+            <div class="category-pagination">
+                <button type="button" class="btn btn-secondary" id="prevPageButton">
+                    Previous
+                </button>
+
+                <span id="pageIndicator">Page 1</span>
+
+                <button type="button" class="btn btn-secondary" id="nextPageButton">
+                    Next
+                </button>
+            </div>
+        </section>
+    </main>
+
+    <script src="js/auth.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/achievements.js"></script>
+    <script src="js/category.js"></script>
+</body>
+</html>

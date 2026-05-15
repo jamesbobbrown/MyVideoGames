@@ -340,6 +340,10 @@ quickAddForm.addEventListener("submit", async function (e) {
 
         updateRatingVisibility();
         await loadUserList();
+        
+        if (typeof checkAndShowNewAchievements === "function") {
+            await checkAndShowNewAchievements();
+        }
 
     } catch (error) {
         alert(error.message);

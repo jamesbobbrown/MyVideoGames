@@ -51,10 +51,12 @@ async function loadHomeCategories() {
 
         homeCategories = categories.map((category, index) => {
             const games = category.juegos || category.Juegos || [];
+            const title = category.titulo || category.Titulo || "Games";
 
             return {
                 id: `category-${index}`,
-                titulo: category.titulo || category.Titulo || "Games",
+                titulo: title,
+                type: getCategoryTypeFromTitle(title),
                 juegos: games.filter((game) => {
                     const image = game.imagenUrl || game.ImagenUrl;
                     return image && image.trim() !== "";
@@ -84,6 +86,10 @@ async function loadHomeCategories() {
 function renderAllCategories() {
     const container = document.getElementById("home-categories-container");
 
+    if (!container) {
+        return;
+    }
+
     container.innerHTML = homeCategories
         .map((category) => createCategorySection(category))
         .join("");
@@ -99,9 +105,15 @@ function createCategorySection(category) {
     return `
         <section class="games-category">
             <div class="category-header">
-                <div class="section-title">
-                    <h2>${category.titulo}</h2>
-                    <p>Selected from RAWG API · ${category.juegos.length} games loaded</p>
+                <div class="category-title-row">
+                    <div class="section-title">
+                        <h2>${category.titulo}</h2>
+                        <p>Selected from RAWG API · ${category.juegos.length} games loaded</p>
+                    </div>
+
+                    <a href="${getCategoryUrl(category)}" class="view-all-link">
+                        View all
+                    </a>
                 </div>
 
                 <div class="carousel-controls">
@@ -155,6 +167,45 @@ function moveCarousel(categoryId, amount) {
     renderAllCategories();
 }
 
+function getCategoryTypeFromTitle(title) {
+    const normalized = title.toLowerCase();
+
+    if (normalized.includes("top rated")) {
+        return "top-rated";
+    }
+
+    if (normalized.includes("new releases")) {
+        return "new-releases";
+    }
+
+    if (normalized.includes("popular")) {
+        return "popular";
+    }
+
+    if (normalized.includes("action")) {
+        return "action";
+    }
+
+    if (normalized.includes("rpg")) {
+        return "rpg";
+    }
+
+    if (normalized.includes("indie")) {
+        return "indie";
+    }
+
+    if (normalized.includes("shooter")) {
+        return "shooter";
+    }
+
+    return "popular";
+}
+
+function getCategoryUrl(category) {
+    const type = category.type || getCategoryTypeFromTitle(category.titulo);
+    return `category.html?type=${encodeURIComponent(type)}`;
+}
+
 function createRawgGameCard(game) {
     const user = getLoggedUser();
 
@@ -185,17 +236,20 @@ function createRawgGameCard(game) {
     } else if (alreadyAdded) {
         buttonHtml = `
             <button class="game-button added" disabled onclick="event.stopPropagation();">
-                Added
+                ✓ In your list
             </button>
         `;
     } else {
         buttonHtml = `
-            <button class="game-button" onclick="event.stopPropagation(); handleAddRawgGame('${safeGame}')">
+            <button 
+                class="game-button" 
+                data-rawg-id="${rawgId}"
+                onclick="event.stopPropagation(); handleAddRawgGame('${safeGame}', ${rawgId})"
+            >
                 Add to my list
             </button>
         `;
     }
-    
 
     return `
         <article class="game-card clickable-card" onclick="goToGameDetail(${rawgId})">
@@ -219,6 +273,28 @@ function createRawgGameCard(game) {
     `;
 }
 
+function markGameAsAdded(rawgId) {
+    homeCategories.forEach((category) => {
+        category.juegos.forEach((game) => {
+            const gameRawgId = game.rawgId || game.RawgId;
+
+            if (Number(gameRawgId) === Number(rawgId)) {
+                game.yaAnadido = true;
+                game.YaAnadido = true;
+            }
+        });
+    });
+
+    const buttons = document.querySelectorAll(`[data-rawg-id="${rawgId}"]`);
+
+    buttons.forEach((button) => {
+        button.textContent = "✓ In your list";
+        button.disabled = true;
+        button.classList.add("added");
+        button.removeAttribute("onclick");
+    });
+}
+
 function goToGameDetail(rawgId) {
     window.location.href = `game.html?rawgId=${rawgId}`;
 }
@@ -227,16 +303,34 @@ function goToLogin() {
     window.location.href = "login.html";
 }
 
-async function handleAddRawgGame(encodedGame) {
+async function handleAddRawgGame(encodedGame, rawgId) {
     try {
         const game = JSON.parse(decodeURIComponent(encodedGame));
 
+        const buttons = document.querySelectorAll(`[data-rawg-id="${rawgId}"]`);
+
+        buttons.forEach((button) => {
+            button.textContent = "Adding...";
+            button.disabled = true;
+        });
+
         await addRawgGameToMyList(game);
 
-        await loadHomeCategories();
+        markGameAsAdded(rawgId);
+        
+        if (typeof checkAndShowNewAchievements === "function") {
+            await checkAndShowNewAchievements();
+        }
 
     } catch (error) {
         console.error(error);
         alert("Could not add the game to your list.");
+
+        const buttons = document.querySelectorAll(`[data-rawg-id="${rawgId}"]`);
+
+        buttons.forEach((button) => {
+            button.textContent = "Add to my list";
+            button.disabled = false;
+        });
     }
 }

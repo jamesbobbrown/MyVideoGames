@@ -143,6 +143,10 @@ async function handleAddGameFromDetail(encodedGame) {
 
         await addRawgGameToMyList(game);
 
+        if (typeof checkAndShowNewAchievements === "function") {
+            await checkAndShowNewAchievements();
+        }
+        
         const button = document.getElementById("detailAddButton");
 
         if (button) {
