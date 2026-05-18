@@ -35,17 +35,13 @@ async function loadHomeCategories() {
         return;
     }
 
-    container.innerHTML = `
-        <p class="loading-message">Loading games...</p>
-    `;
+    container.innerHTML = `<p class="loading-message">Loading games...</p>`;
 
     try {
         const categories = await getHomeCategories();
 
         if (!categories || categories.length === 0) {
-            container.innerHTML = `
-                <p class="empty-message">No games found.</p>
-            `;
+            container.innerHTML = `<p class="empty-message">No games found.</p>`;
             return;
         }
 
@@ -93,6 +89,8 @@ function renderAllCategories() {
     container.innerHTML = homeCategories
         .map((category) => createCategorySection(category))
         .join("");
+
+    attachHomeAddButtonEvents();
 }
 
 function createCategorySection(category) {
@@ -229,22 +227,31 @@ function createRawgGameCard(game) {
 
     if (!user) {
         buttonHtml = `
-            <button class="game-button login-required" onclick="event.stopPropagation(); goToLogin();">
+            <button 
+                type="button"
+                class="game-button login-required"
+                data-login-button="true"
+            >
                 Login to add
             </button>
         `;
     } else if (alreadyAdded) {
         buttonHtml = `
-            <button class="game-button added" disabled onclick="event.stopPropagation();">
+            <button 
+                type="button"
+                class="game-button added" 
+                disabled
+            >
                 ✓ In your list
             </button>
         `;
     } else {
         buttonHtml = `
             <button 
-                class="game-button" 
+                type="button"
+                class="game-button js-home-add-button" 
                 data-rawg-id="${rawgId}"
-                onclick="event.stopPropagation(); handleAddRawgGame('${safeGame}', ${rawgId})"
+                data-game="${safeGame}"
             >
                 Add to my list
             </button>
@@ -252,7 +259,7 @@ function createRawgGameCard(game) {
     }
 
     return `
-        <article class="game-card clickable-card" onclick="goToGameDetail(${rawgId})">
+        <article class="game-card">
             <div class="game-image-wrapper">
                 <img 
                     src="${image}" 
@@ -267,10 +274,37 @@ function createRawgGameCard(game) {
                 <p class="game-genre">${genre}</p>
                 <p class="game-rating">⭐ ${rating}</p>
 
-                ${buttonHtml}
+                <div class="game-card-actions">
+                    ${buttonHtml}
+                    <a href="game.html?rawgId=${rawgId}" class="game-detail-link">
+                        View details
+                    </a>
+                </div>
             </div>
         </article>
     `;
+}
+
+function attachHomeAddButtonEvents() {
+    document.querySelectorAll("[data-login-button='true']").forEach((button) => {
+        button.addEventListener("click", function (event) {
+            event.preventDefault();
+            event.stopPropagation();
+            goToLogin();
+        });
+    });
+
+    document.querySelectorAll(".js-home-add-button").forEach((button) => {
+        button.addEventListener("click", async function (event) {
+            event.preventDefault();
+            event.stopPropagation();
+
+            const rawgId = button.dataset.rawgId;
+            const encodedGame = button.dataset.game;
+
+            await handleAddRawgGame(encodedGame, rawgId);
+        });
+    });
 }
 
 function markGameAsAdded(rawgId) {
@@ -291,12 +325,8 @@ function markGameAsAdded(rawgId) {
         button.textContent = "✓ In your list";
         button.disabled = true;
         button.classList.add("added");
-        button.removeAttribute("onclick");
+        button.classList.remove("js-home-add-button");
     });
-}
-
-function goToGameDetail(rawgId) {
-    window.location.href = `game.html?rawgId=${rawgId}`;
 }
 
 function goToLogin() {
@@ -304,10 +334,10 @@ function goToLogin() {
 }
 
 async function handleAddRawgGame(encodedGame, rawgId) {
+    const buttons = document.querySelectorAll(`[data-rawg-id="${rawgId}"]`);
+
     try {
         const game = JSON.parse(decodeURIComponent(encodedGame));
-
-        const buttons = document.querySelectorAll(`[data-rawg-id="${rawgId}"]`);
 
         buttons.forEach((button) => {
             button.textContent = "Adding...";
@@ -317,16 +347,10 @@ async function handleAddRawgGame(encodedGame, rawgId) {
         await addRawgGameToMyList(game);
 
         markGameAsAdded(rawgId);
-        
-        if (typeof checkAndShowNewAchievements === "function") {
-            await checkAndShowNewAchievements();
-        }
 
     } catch (error) {
         console.error(error);
         alert("Could not add the game to your list.");
-
-        const buttons = document.querySelectorAll(`[data-rawg-id="${rawgId}"]`);
 
         buttons.forEach((button) => {
             button.textContent = "Add to my list";

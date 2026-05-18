@@ -8,12 +8,19 @@ document.addEventListener("DOMContentLoaded", function () {
 
     categoryType = params.get("type") || "popular";
 
-    document.getElementById("applyCategoryFilters").addEventListener("click", function () {
+    const applyButton = document.getElementById("applyCategoryFilters");
+    const searchInput = document.getElementById("categorySearchInput");
+    const genreSelect = document.getElementById("categoryGenreSelect");
+    const ratingSelect = document.getElementById("categoryRatingSelect");
+    const prevButton = document.getElementById("prevPageButton");
+    const nextButton = document.getElementById("nextPageButton");
+
+    applyButton.addEventListener("click", function () {
         currentPage = 1;
         loadCategoryGames();
     });
 
-    document.getElementById("categorySearchInput").addEventListener("input", function () {
+    searchInput.addEventListener("input", function () {
         clearTimeout(searchTimeout);
 
         searchTimeout = setTimeout(function () {
@@ -22,24 +29,24 @@ document.addEventListener("DOMContentLoaded", function () {
         }, 450);
     });
 
-    document.getElementById("categoryGenreSelect").addEventListener("change", function () {
+    genreSelect.addEventListener("change", function () {
         currentPage = 1;
         loadCategoryGames();
     });
 
-    document.getElementById("categoryRatingSelect").addEventListener("change", function () {
+    ratingSelect.addEventListener("change", function () {
         currentPage = 1;
         loadCategoryGames();
     });
 
-    document.getElementById("prevPageButton").addEventListener("click", function () {
+    prevButton.addEventListener("click", function () {
         if (currentPage > 1) {
             currentPage--;
             loadCategoryGames();
         }
     });
 
-    document.getElementById("nextPageButton").addEventListener("click", function () {
+    nextButton.addEventListener("click", function () {
         if (hasNextPage) {
             currentPage++;
             loadCategoryGames();
@@ -93,7 +100,6 @@ async function loadCategoryGames() {
         hasNextPage = result.hasNextPage || result.HasNextPage || false;
 
         titleElement.textContent = title;
-
         document.title = `${title} - MyVideoGames`;
 
         renderCategoryGames(games);
@@ -146,22 +152,32 @@ function createCategoryGameCard(game) {
 
     if (!user) {
         buttonHtml = `
-            <button class="game-button login-required" onclick="event.stopPropagation(); window.location.href='login.html';">
+            <button 
+                type="button"
+                class="game-button login-required" 
+                onclick="event.preventDefault(); event.stopPropagation(); window.location.href='login.html';"
+            >
                 Login to add
             </button>
         `;
     } else if (alreadyAdded) {
         buttonHtml = `
-            <button class="game-button added" disabled onclick="event.stopPropagation();">
+            <button 
+                type="button"
+                class="game-button added" 
+                disabled 
+                onclick="event.preventDefault(); event.stopPropagation();"
+            >
                 ✓ In your list
             </button>
         `;
     } else {
         buttonHtml = `
             <button 
+                type="button"
                 class="game-button" 
                 data-category-rawg-id="${rawgId}"
-                onclick="event.stopPropagation(); handleAddCategoryGame('${safeGame}', ${rawgId})"
+                onclick="event.preventDefault(); event.stopPropagation(); handleAddCategoryGame('${safeGame}', ${rawgId})"
             >
                 Add to my list
             </button>
@@ -169,7 +185,10 @@ function createCategoryGameCard(game) {
     }
 
     return `
-        <article class="game-card clickable-card" onclick="window.location.href='game.html?rawgId=${rawgId}'">
+        <article 
+            class="game-card clickable-card" 
+            onclick="window.location.href='game.html?rawgId=${rawgId}'"
+        >
             <div class="game-image-wrapper">
                 <img 
                     src="${image}" 
@@ -191,10 +210,10 @@ function createCategoryGameCard(game) {
 }
 
 async function handleAddCategoryGame(encodedGame, rawgId) {
+    const buttons = document.querySelectorAll(`[data-category-rawg-id="${rawgId}"]`);
+
     try {
         const game = JSON.parse(decodeURIComponent(encodedGame));
-
-        const buttons = document.querySelectorAll(`[data-category-rawg-id="${rawgId}"]`);
 
         buttons.forEach(button => {
             button.textContent = "Adding...";
@@ -209,16 +228,13 @@ async function handleAddCategoryGame(encodedGame, rawgId) {
             button.classList.add("added");
             button.removeAttribute("onclick");
         });
-        
-        if (typeof checkAndShowNewAchievements === "function") {
-            await checkAndShowNewAchievements();
-        }
+
+        // No full reload, no category reload, no achievement API check here.
+        // Achievements can be checked later on profile/library if needed.
 
     } catch (error) {
         console.error(error);
         alert("Could not add the game to your list.");
-
-        const buttons = document.querySelectorAll(`[data-category-rawg-id="${rawgId}"]`);
 
         buttons.forEach(button => {
             button.textContent = "Add to my list";

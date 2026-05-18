@@ -1820,3 +1820,26 @@ button {
       width: calc(100vw - 28px);
   }
 }
+.game-card-actions {
+  margin-top: auto;
+  display: grid;
+  gap: 10px;
+}
+
+.game-detail-link {
+  width: 100%;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  padding: 11px 12px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #d1d5db;
+  font-weight: 800;
+  transition: 0.2s ease;
+}
+
+.game-detail-link:hover {
+  background: rgba(45, 212, 191, 0.16);
+  color: var(--secondary);
+}
