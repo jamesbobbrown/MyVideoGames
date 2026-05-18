@@ -138,23 +138,33 @@ function getPlatforms(game) {
 }
 
 async function handleAddGameFromDetail(encodedGame) {
+    const button = document.getElementById("detailAddButton");
+
     try {
         const game = JSON.parse(decodeURIComponent(encodedGame));
 
+        if (button) {
+            button.textContent = "Adding...";
+            button.disabled = true;
+        }
+
         await addRawgGameToMyList(game);
 
-        const button = document.getElementById("detailAddButton");
-
         if (button) {
-            button.textContent = "Added";
+            button.textContent = "✓ In your list";
             button.disabled = true;
             button.classList.add("added");
         }
 
-        alert("Game added to your list.");
+        // No reload here.
 
     } catch (error) {
         console.error(error);
         alert("Could not add game to your list.");
+
+        if (button) {
+            button.textContent = "Add to my list";
+            button.disabled = false;
+        }
     }
 }

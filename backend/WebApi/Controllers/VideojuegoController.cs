@@ -426,4 +426,266 @@ public class VideojuegoController : ControllerBase
 
         return normalized.Trim();
     }
+    [HttpGet("categoryRawg")]
+    public async Task<IActionResult> GetCategoryRawg(
+        [FromQuery] string type = "popular",
+        [FromQuery] int page = 1,
+        [FromQuery] string? genre = null,
+        [FromQuery] double? minRating = null,
+        [FromQuery] string? search = null,
+        [FromQuery] int? usuarioId = null)
+    {
+        string? apiKey = _configuration["Rawg:ApiKey"];
+
+        if (string.IsNullOrWhiteSpace(apiKey))
+        {
+            return StatusCode(500, "RAWG API key is not configured.");
+        }
+
+        if (page <= 0)
+        {
+            page = 1;
+        }
+
+        string title = GetCategoryTitle(type);
+        string ordering = GetCategoryOrdering(type);
+        string? genreSlug = GetGenreSlug(genre);
+
+        List<RawgHomeGameDTO> games = new();
+        HashSet<string> usedTitles = new();
+
+        /*
+            RAWG can return games without images and repeated editions.
+            We request more than we need and then filter clean results.
+            Frontend page size target = 50.
+        */
+        int rawgStartPage = ((page - 1) * 2) + 1;
+
+        for (int rawgPage = rawgStartPage; rawgPage < rawgStartPage + 4; rawgPage++)
+        {
+            string url = BuildRawgCategoryUrl(
+                apiKey,
+                ordering,
+                rawgPage,
+                genreSlug,
+                search
+            );
+
+            List<RawgHomeGameDTO> batch = await GetRawgGamesForCategory(
+                url,
+                usuarioId,
+                usedTitles,
+                minRating
+            );
+
+            games.AddRange(batch);
+
+            if (games.Count >= 50)
+            {
+                break;
+            }
+        }
+
+        games = games.Take(50).ToList();
+
+        RawgCategoryPageDTO result = new()
+        {
+            Titulo = title,
+            Type = type,
+            Page = page,
+            PageSize = 50,
+            HasNextPage = games.Count == 50,
+            Juegos = games
+        };
+
+        return Ok(result);
+    }
+    private static string GetCategoryTitle(string type)
+{
+    return type.ToLowerInvariant() switch
+    {
+        "top-rated" => "Top rated games",
+        "new-releases" => "New releases",
+        "action" => "Action games",
+        "rpg" => "RPG games",
+        "indie" => "Indie games",
+        "shooter" => "Shooter games",
+        _ => "Popular games"
+    };
+}
+
+private static string GetCategoryOrdering(string type)
+{
+    return type.ToLowerInvariant() switch
+    {
+        "top-rated" => "-rating",
+        "new-releases" => "-released",
+        _ => "-added"
+    };
+}
+
+private static string? GetGenreSlug(string? genre)
+{
+    if (string.IsNullOrWhiteSpace(genre))
+    {
+        return null;
+    }
+
+    return genre.ToLowerInvariant() switch
+    {
+        "action" => "action",
+        "adventure" => "adventure",
+        "rpg" => "role-playing-games-rpg",
+        "shooter" => "shooter",
+        "indie" => "indie",
+        "strategy" => "strategy",
+        "sports" => "sports",
+        "racing" => "racing",
+        "simulation" => "simulation",
+        "puzzle" => "puzzle",
+        "platformer" => "platformer",
+        _ => null
+    };
+}
+
+private static string BuildRawgCategoryUrl(
+    string apiKey,
+    string ordering,
+    int page,
+    string? genreSlug,
+    string? search)
+{
+    string url =
+        $"https://api.rawg.io/api/games?key={apiKey}" +
+        $"&ordering={ordering}" +
+        $"&page_size=40" +
+        $"&page={page}";
+
+    if (!string.IsNullOrWhiteSpace(genreSlug))
+    {
+        url += $"&genres={genreSlug}";
+    }
+
+    if (!string.IsNullOrWhiteSpace(search))
+    {
+        url += $"&search={Uri.EscapeDataString(search)}";
+    }
+
+    return url;
+}
+
+private async Task<List<RawgHomeGameDTO>> GetRawgGamesForCategory(
+    string url,
+    int? usuarioId,
+    HashSet<string> usedTitles,
+    double? minRating)
+{
+    var client = _httpClientFactory.CreateClient();
+
+    var response = await client.GetAsync(url);
+
+    if (!response.IsSuccessStatusCode)
+    {
+        return new List<RawgHomeGameDTO>();
+    }
+
+    var json = await response.Content.ReadAsStringAsync();
+
+    using var document = JsonDocument.Parse(json);
+
+    if (!document.RootElement.TryGetProperty("results", out var results))
+    {
+        return new List<RawgHomeGameDTO>();
+    }
+
+    List<RawgHomeGameDTO> games = new();
+
+    foreach (var item in results.EnumerateArray())
+    {
+        int rawgId = item.GetProperty("id").GetInt32();
+
+        string titulo = item.TryGetProperty("name", out var nameProp)
+            ? nameProp.GetString() ?? string.Empty
+            : string.Empty;
+
+        string imagenUrl = item.TryGetProperty("background_image", out var imageProp)
+            ? imageProp.GetString() ?? string.Empty
+            : string.Empty;
+
+        if (string.IsNullOrWhiteSpace(titulo) || string.IsNullOrWhiteSpace(imagenUrl))
+        {
+            continue;
+        }
+
+        string normalizedTitle = NormalizeGameTitle(titulo);
+
+        if (usedTitles.Contains(normalizedTitle))
+        {
+            continue;
+        }
+
+        double? rating = null;
+
+        if (item.TryGetProperty("rating", out var ratingProp) &&
+            ratingProp.ValueKind == JsonValueKind.Number)
+        {
+            rating = ratingProp.GetDouble();
+        }
+
+        if (minRating != null && rating != null && rating < minRating.Value)
+        {
+            continue;
+        }
+
+        usedTitles.Add(normalizedTitle);
+
+        string fecha = item.TryGetProperty("released", out var releasedProp)
+            ? releasedProp.GetString() ?? string.Empty
+            : string.Empty;
+
+        string genero = "Unknown genre";
+
+        if (item.TryGetProperty("genres", out var genresProp) &&
+            genresProp.ValueKind == JsonValueKind.Array &&
+            genresProp.GetArrayLength() > 0)
+        {
+            var firstGenre = genresProp[0];
+
+            if (firstGenre.TryGetProperty("name", out var genreName))
+            {
+                genero = genreName.GetString() ?? "Unknown genre";
+            }
+        }
+
+        bool yaAnadido = false;
+
+        if (usuarioId != null)
+        {
+            yaAnadido = await _context.TA_LISTA_USUARIO
+                .Join(
+                    _context.TA_VIDEOJUEGO,
+                    lista => lista.VIDEOJUEGO_ID,
+                    juego => juego.ID,
+                    (lista, juego) => new { lista, juego }
+                )
+                .AnyAsync(x =>
+                    x.lista.USUARIO_ID == usuarioId.Value &&
+                    x.juego.RAWG_ID == rawgId
+                );
+        }
+
+        games.Add(new RawgHomeGameDTO
+        {
+            RawgId = rawgId,
+            Titulo = titulo,
+            ImagenUrl = imagenUrl,
+            Rating = rating,
+            Genero = genero,
+            FechaLanzamiento = fecha,
+            YaAnadido = yaAnadido
+        });
+    }
+
+    return games;
+}
 }

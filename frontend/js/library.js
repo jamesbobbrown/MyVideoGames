@@ -339,6 +339,11 @@ quickAddForm.addEventListener("submit", async function (e) {
         searchResults.style.display = "none";
 
         updateRatingVisibility();
+
+        if (typeof checkAndShowNewAchievements === "function") {
+            await checkAndShowNewAchievements();
+        }
+        
         await loadUserList();
 
     } catch (error) {

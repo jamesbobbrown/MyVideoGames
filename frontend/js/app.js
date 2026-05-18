@@ -35,26 +35,24 @@ async function loadHomeCategories() {
         return;
     }
 
-    container.innerHTML = `
-        <p class="loading-message">Loading games...</p>
-    `;
+    container.innerHTML = `<p class="loading-message">Loading games...</p>`;
 
     try {
         const categories = await getHomeCategories();
 
         if (!categories || categories.length === 0) {
-            container.innerHTML = `
-                <p class="empty-message">No games found.</p>
-            `;
+            container.innerHTML = `<p class="empty-message">No games found.</p>`;
             return;
         }
 
         homeCategories = categories.map((category, index) => {
             const games = category.juegos || category.Juegos || [];
+            const title = category.titulo || category.Titulo || "Games";
 
             return {
                 id: `category-${index}`,
-                titulo: category.titulo || category.Titulo || "Games",
+                titulo: title,
+                type: getCategoryTypeFromTitle(title),
                 juegos: games.filter((game) => {
                     const image = game.imagenUrl || game.ImagenUrl;
                     return image && image.trim() !== "";
@@ -84,9 +82,15 @@ async function loadHomeCategories() {
 function renderAllCategories() {
     const container = document.getElementById("home-categories-container");
 
+    if (!container) {
+        return;
+    }
+
     container.innerHTML = homeCategories
         .map((category) => createCategorySection(category))
         .join("");
+
+    attachHomeAddButtonEvents();
 }
 
 function createCategorySection(category) {
@@ -99,9 +103,15 @@ function createCategorySection(category) {
     return `
         <section class="games-category">
             <div class="category-header">
-                <div class="section-title">
-                    <h2>${category.titulo}</h2>
-                    <p>Selected from RAWG API · ${category.juegos.length} games loaded</p>
+                <div class="category-title-row">
+                    <div class="section-title">
+                        <h2>${category.titulo}</h2>
+                        <p>Selected from RAWG API · ${category.juegos.length} games loaded</p>
+                    </div>
+
+                    <a href="${getCategoryUrl(category)}" class="view-all-link">
+                        View all
+                    </a>
                 </div>
 
                 <div class="carousel-controls">
@@ -155,6 +165,45 @@ function moveCarousel(categoryId, amount) {
     renderAllCategories();
 }
 
+function getCategoryTypeFromTitle(title) {
+    const normalized = title.toLowerCase();
+
+    if (normalized.includes("top rated")) {
+        return "top-rated";
+    }
+
+    if (normalized.includes("new releases")) {
+        return "new-releases";
+    }
+
+    if (normalized.includes("popular")) {
+        return "popular";
+    }
+
+    if (normalized.includes("action")) {
+        return "action";
+    }
+
+    if (normalized.includes("rpg")) {
+        return "rpg";
+    }
+
+    if (normalized.includes("indie")) {
+        return "indie";
+    }
+
+    if (normalized.includes("shooter")) {
+        return "shooter";
+    }
+
+    return "popular";
+}
+
+function getCategoryUrl(category) {
+    const type = category.type || getCategoryTypeFromTitle(category.titulo);
+    return `category.html?type=${encodeURIComponent(type)}`;
+}
+
 function createRawgGameCard(game) {
     const user = getLoggedUser();
 
@@ -178,27 +227,39 @@ function createRawgGameCard(game) {
 
     if (!user) {
         buttonHtml = `
-            <button class="game-button login-required" onclick="event.stopPropagation(); goToLogin();">
+            <button 
+                type="button"
+                class="game-button login-required"
+                data-login-button="true"
+            >
                 Login to add
             </button>
         `;
     } else if (alreadyAdded) {
         buttonHtml = `
-            <button class="game-button added" disabled onclick="event.stopPropagation();">
-                Added
+            <button 
+                type="button"
+                class="game-button added" 
+                disabled
+            >
+                ✓ In your list
             </button>
         `;
     } else {
         buttonHtml = `
-            <button class="game-button" onclick="event.stopPropagation(); handleAddRawgGame('${safeGame}')">
+            <button 
+                type="button"
+                class="game-button js-home-add-button" 
+                data-rawg-id="${rawgId}"
+                data-game="${safeGame}"
+            >
                 Add to my list
             </button>
         `;
     }
-    
 
     return `
-        <article class="game-card clickable-card" onclick="goToGameDetail(${rawgId})">
+        <article class="game-card">
             <div class="game-image-wrapper">
                 <img 
                     src="${image}" 
@@ -213,30 +274,87 @@ function createRawgGameCard(game) {
                 <p class="game-genre">${genre}</p>
                 <p class="game-rating">⭐ ${rating}</p>
 
-                ${buttonHtml}
+                <div class="game-card-actions">
+                    ${buttonHtml}
+                    <a href="game.html?rawgId=${rawgId}" class="game-detail-link">
+                        View details
+                    </a>
+                </div>
             </div>
         </article>
     `;
 }
 
-function goToGameDetail(rawgId) {
-    window.location.href = `game.html?rawgId=${rawgId}`;
+function attachHomeAddButtonEvents() {
+    document.querySelectorAll("[data-login-button='true']").forEach((button) => {
+        button.addEventListener("click", function (event) {
+            event.preventDefault();
+            event.stopPropagation();
+            goToLogin();
+        });
+    });
+
+    document.querySelectorAll(".js-home-add-button").forEach((button) => {
+        button.addEventListener("click", async function (event) {
+            event.preventDefault();
+            event.stopPropagation();
+
+            const rawgId = button.dataset.rawgId;
+            const encodedGame = button.dataset.game;
+
+            await handleAddRawgGame(encodedGame, rawgId);
+        });
+    });
+}
+
+function markGameAsAdded(rawgId) {
+    homeCategories.forEach((category) => {
+        category.juegos.forEach((game) => {
+            const gameRawgId = game.rawgId || game.RawgId;
+
+            if (Number(gameRawgId) === Number(rawgId)) {
+                game.yaAnadido = true;
+                game.YaAnadido = true;
+            }
+        });
+    });
+
+    const buttons = document.querySelectorAll(`[data-rawg-id="${rawgId}"]`);
+
+    buttons.forEach((button) => {
+        button.textContent = "✓ In your list";
+        button.disabled = true;
+        button.classList.add("added");
+        button.classList.remove("js-home-add-button");
+    });
 }
 
 function goToLogin() {
     window.location.href = "login.html";
 }
 
-async function handleAddRawgGame(encodedGame) {
+async function handleAddRawgGame(encodedGame, rawgId) {
+    const buttons = document.querySelectorAll(`[data-rawg-id="${rawgId}"]`);
+
     try {
         const game = JSON.parse(decodeURIComponent(encodedGame));
 
+        buttons.forEach((button) => {
+            button.textContent = "Adding...";
+            button.disabled = true;
+        });
+
         await addRawgGameToMyList(game);
 
-        await loadHomeCategories();
+        markGameAsAdded(rawgId);
 
     } catch (error) {
         console.error(error);
         alert("Could not add the game to your list.");
+
+        buttons.forEach((button) => {
+            button.textContent = "Add to my list";
+            button.disabled = false;
+        });
     }
 }
