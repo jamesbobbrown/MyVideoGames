@@ -127,6 +127,8 @@ function renderCategoryGames(games) {
     container.innerHTML = games
         .map(game => createCategoryGameCard(game))
         .join("");
+
+    attachCategoryButtonEvents();
 }
 
 function createCategoryGameCard(game) {
@@ -154,8 +156,7 @@ function createCategoryGameCard(game) {
         buttonHtml = `
             <button 
                 type="button"
-                class="game-button login-required" 
-                onclick="event.preventDefault(); event.stopPropagation(); window.location.href='login.html';"
+                class="game-button js-category-login-button"
             >
                 Login to add
             </button>
@@ -165,8 +166,7 @@ function createCategoryGameCard(game) {
             <button 
                 type="button"
                 class="game-button added" 
-                disabled 
-                onclick="event.preventDefault(); event.stopPropagation();"
+                disabled
             >
                 ✓ In your list
             </button>
@@ -175,9 +175,9 @@ function createCategoryGameCard(game) {
         buttonHtml = `
             <button 
                 type="button"
-                class="game-button" 
+                class="game-button js-category-add-button" 
                 data-category-rawg-id="${rawgId}"
-                onclick="event.preventDefault(); event.stopPropagation(); handleAddCategoryGame('${safeGame}', ${rawgId})"
+                data-game="${safeGame}"
             >
                 Add to my list
             </button>
@@ -185,10 +185,7 @@ function createCategoryGameCard(game) {
     }
 
     return `
-        <article 
-            class="game-card clickable-card" 
-            onclick="window.location.href='game.html?rawgId=${rawgId}'"
-        >
+        <article class="game-card">
             <div class="game-image-wrapper">
                 <img 
                     src="${image}" 
@@ -203,10 +200,37 @@ function createCategoryGameCard(game) {
                 <p class="game-genre">${genre}</p>
                 <p class="game-rating">⭐ ${rating}</p>
 
-                ${buttonHtml}
+                <div class="game-card-actions">
+                    ${buttonHtml}
+                    <a href="game.html?rawgId=${rawgId}" class="game-detail-link">
+                        View details
+                    </a>
+                </div>
             </div>
         </article>
     `;
+}
+
+function attachCategoryButtonEvents() {
+    document.querySelectorAll(".js-category-login-button").forEach(button => {
+        button.addEventListener("click", function (event) {
+            event.preventDefault();
+            event.stopPropagation();
+            window.location.href = "login.html";
+        });
+    });
+
+    document.querySelectorAll(".js-category-add-button").forEach(button => {
+        button.addEventListener("click", async function (event) {
+            event.preventDefault();
+            event.stopPropagation();
+
+            const rawgId = button.dataset.categoryRawgId;
+            const encodedGame = button.dataset.game;
+
+            await handleAddCategoryGame(encodedGame, rawgId);
+        });
+    });
 }
 
 async function handleAddCategoryGame(encodedGame, rawgId) {
@@ -226,11 +250,8 @@ async function handleAddCategoryGame(encodedGame, rawgId) {
             button.textContent = "✓ In your list";
             button.disabled = true;
             button.classList.add("added");
-            button.removeAttribute("onclick");
+            button.classList.remove("js-category-add-button");
         });
-
-        // No full reload, no category reload, no achievement API check here.
-        // Achievements can be checked later on profile/library if needed.
 
     } catch (error) {
         console.error(error);

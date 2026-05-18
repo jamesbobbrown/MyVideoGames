@@ -688,4 +688,152 @@ private async Task<List<RawgHomeGameDTO>> GetRawgGamesForCategory(
 
     return games;
 }
+[HttpGet("recommendations")]
+public async Task<IActionResult> GetRecommendations([FromQuery] int usuarioId)
+{
+    string? apiKey = _configuration["Rawg:ApiKey"];
+
+    if (string.IsNullOrWhiteSpace(apiKey))
+    {
+        return StatusCode(500, "RAWG API key is not configured.");
+    }
+
+    var userGames = await _context.TA_LISTA_USUARIO
+        .Where(x => x.USUARIO_ID == usuarioId)
+        .Join(
+            _context.TA_VIDEOJUEGO,
+            lista => lista.VIDEOJUEGO_ID,
+            juego => juego.ID,
+            (lista, juego) => new
+            {
+                juego.RAWG_ID,
+                juego.GENERO
+            }
+        )
+        .ToListAsync();
+
+    if (!userGames.Any())
+    {
+        return Ok(new List<RawgHomeGameDTO>());
+    }
+
+    var existingRawgIds = userGames
+        .Where(x => x.RAWG_ID != null)
+        .Select(x => x.RAWG_ID!.Value)
+        .ToHashSet();
+
+    string mainGenre = userGames
+        .Where(x => !string.IsNullOrWhiteSpace(x.GENERO))
+        .Select(x => x.GENERO.Split(",")[0].Trim())
+        .Where(x => !string.IsNullOrWhiteSpace(x))
+        .GroupBy(x => x.ToLowerInvariant())
+        .OrderByDescending(g => g.Count())
+        .Select(g => g.Key)
+        .FirstOrDefault() ?? "action";
+
+    string? genreSlug = GetGenreSlug(mainGenre) ?? GetGenreSlug("action");
+
+    string url =
+        $"https://api.rawg.io/api/games?key={apiKey}" +
+        $"&genres={genreSlug}" +
+        $"&ordering=-rating" +
+        $"&page_size=40";
+
+    var client = _httpClientFactory.CreateClient();
+
+    var response = await client.GetAsync(url);
+
+    if (!response.IsSuccessStatusCode)
+    {
+        return StatusCode((int)response.StatusCode, "RAWG request failed.");
+    }
+
+    var json = await response.Content.ReadAsStringAsync();
+
+    using var document = JsonDocument.Parse(json);
+
+    if (!document.RootElement.TryGetProperty("results", out var results))
+    {
+        return Ok(new List<RawgHomeGameDTO>());
+    }
+
+    List<RawgHomeGameDTO> recommendations = new();
+    HashSet<string> usedTitles = new();
+
+    foreach (var item in results.EnumerateArray())
+    {
+        int rawgId = item.GetProperty("id").GetInt32();
+
+        if (existingRawgIds.Contains(rawgId))
+        {
+            continue;
+        }
+
+        string titulo = item.TryGetProperty("name", out var nameProp)
+            ? nameProp.GetString() ?? string.Empty
+            : string.Empty;
+
+        string imagenUrl = item.TryGetProperty("background_image", out var imageProp)
+            ? imageProp.GetString() ?? string.Empty
+            : string.Empty;
+
+        if (string.IsNullOrWhiteSpace(titulo) || string.IsNullOrWhiteSpace(imagenUrl))
+        {
+            continue;
+        }
+
+        string normalizedTitle = NormalizeGameTitle(titulo);
+
+        if (usedTitles.Contains(normalizedTitle))
+        {
+            continue;
+        }
+
+        usedTitles.Add(normalizedTitle);
+
+        double? rating = null;
+
+        if (item.TryGetProperty("rating", out var ratingProp) &&
+            ratingProp.ValueKind == JsonValueKind.Number)
+        {
+            rating = ratingProp.GetDouble();
+        }
+
+        string fecha = item.TryGetProperty("released", out var releasedProp)
+            ? releasedProp.GetString() ?? string.Empty
+            : string.Empty;
+
+        string genero = "Unknown genre";
+
+        if (item.TryGetProperty("genres", out var genresProp) &&
+            genresProp.ValueKind == JsonValueKind.Array &&
+            genresProp.GetArrayLength() > 0)
+        {
+            var firstGenre = genresProp[0];
+
+            if (firstGenre.TryGetProperty("name", out var genreName))
+            {
+                genero = genreName.GetString() ?? "Unknown genre";
+            }
+        }
+
+        recommendations.Add(new RawgHomeGameDTO
+        {
+            RawgId = rawgId,
+            Titulo = titulo,
+            ImagenUrl = imagenUrl,
+            Rating = rating,
+            Genero = genero,
+            FechaLanzamiento = fecha,
+            YaAnadido = false
+        });
+
+        if (recommendations.Count >= 10)
+        {
+            break;
+        }
+    }
+
+    return Ok(recommendations);
+}
 }

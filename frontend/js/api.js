@@ -123,3 +123,12 @@ function getPlatformsFromRawg(game) {
         .filter(Boolean)
         .join(", ");
 }
+async function getRecommendationsForUser() {
+    const user = getLoggedUser();
+
+    if (!user) {
+        return [];
+    }
+
+    return await apiRequest(`/Videojuego/recommendations?usuarioId=${user.id}`, "GET");
+}

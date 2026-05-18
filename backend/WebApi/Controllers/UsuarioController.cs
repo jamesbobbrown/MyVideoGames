@@ -101,4 +101,62 @@ public class UsuarioController : ControllerBase
 
         return Ok(usuarios);
     }
+    [HttpPut("update")]
+public async Task<ActionResult<UsuarioDTO>> Update([FromBody] UsuarioDTO dto)
+{
+    if (dto.Id == null)
+    {
+        return BadRequest("User ID is required.");
+    }
+
+    var usuario = await _context.TA_USUARIO.FindAsync(dto.Id.Value);
+
+    if (usuario == null)
+    {
+        return NotFound("User not found.");
+    }
+
+    if (string.IsNullOrWhiteSpace(dto.Username))
+    {
+        return BadRequest("Username is required.");
+    }
+
+    if (string.IsNullOrWhiteSpace(dto.Email))
+    {
+        return BadRequest("Email is required.");
+    }
+
+    bool usernameExists = await _context.TA_USUARIO
+        .AnyAsync(u => u.USERNAME == dto.Username && u.ID != dto.Id.Value);
+
+    if (usernameExists)
+    {
+        return BadRequest("This username is already taken.");
+    }
+
+    bool emailExists = await _context.TA_USUARIO
+        .AnyAsync(u => u.EMAIL == dto.Email && u.ID != dto.Id.Value);
+
+    if (emailExists)
+    {
+        return BadRequest("This email is already registered.");
+    }
+
+    usuario.USERNAME = dto.Username;
+    usuario.EMAIL = dto.Email;
+
+    if (!string.IsNullOrWhiteSpace(dto.Password))
+    {
+        usuario.PASSWORD = dto.Password;
+    }
+
+    await _context.SaveChangesAsync();
+
+    return Ok(new UsuarioDTO
+    {
+        Id = usuario.ID,
+        Username = usuario.USERNAME,
+        Email = usuario.EMAIL
+    });
+}
 }
