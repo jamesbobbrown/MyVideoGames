@@ -1,19 +1,16 @@
-# Frontend
-frontend/node_modules/
-frontend/dist/
-
-# Backend
-backend/WebApi/bin/
-backend/WebApi/obj/
-
-# Local database
-backend/WebApi/*.db
-backend/WebApi/*.db-shm
-backend/WebApi/*.db-wal
-
-# User/editor files
-.vs/
-.vscode/
-
+# Local secrets
 backend/WebApi/appsettings.Development.json
+.env
 
+# SQLite local database
+*.db
+*.db-shm
+*.db-wal
+
+# .NET build output
+bin/
+obj/
+
+# Frontend
+node_modules/
+dist/
