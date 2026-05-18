@@ -1,51 +1,238 @@
-const newsData = [
-    {
-      title: "New DLC announced for a popular RPG",
-      description: "A new expansion is coming with fresh areas, bosses and weapons for players to explore.",
-      tag: "DLC",
-      image: "https://images.unsplash.com/photo-1511882150382-421056c89033?auto=format&fit=crop&w=900&q=80"
-    },
-    {
-      title: "Big gaming event confirmed for summer",
-      description: "Several studios will present new trailers, gameplay previews and release dates during the event.",
-      tag: "Event",
-      image: "https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=900&q=80"
-    },
-    {
-      title: "Indie game surprises players with excellent reviews",
-      description: "A small studio is getting a lot of attention after launching a very polished and creative title.",
-      tag: "Release",
-      image: "https://images.unsplash.com/photo-1552820728-8b83bb6b773f?auto=format&fit=crop&w=900&q=80"
-    },
-    {
-      title: "Patch improves performance and balance",
-      description: "The latest update fixes several bugs, improves optimisation and adjusts some overpowered builds.",
-      tag: "Update",
-      image: "https://images.unsplash.com/photo-1542751110-97427bbecf20?auto=format&fit=crop&w=900&q=80"
+const postForm = document.getElementById("postForm");
+const postType = document.getElementById("postType");
+const postGame = document.getElementById("postGame");
+const postTitle = document.getElementById("postTitle");
+const postContent = document.getElementById("postContent");
+const postMessage = document.getElementById("postMessage");
+const postsContainer = document.getElementById("postsContainer");
+const postFilter = document.getElementById("postFilter");
+
+const currentUser = getLoggedUser();
+
+document.addEventListener("DOMContentLoaded", function () {
+    setupCommunityPage();
+});
+
+async function setupCommunityPage() {
+    if (!currentUser) {
+        postForm.innerHTML = `
+            <div class="empty-box">
+                You must log in to create posts.
+                <br><br>
+                <a href="login.html" class="btn btn-primary">Go to Login</a>
+            </div>
+        `;
+    } else {
+        await loadUserGamesForPostForm();
     }
-  ];
-  
-  const newsContainer = document.getElementById("newsContainer");
-  
-  newsContainer.innerHTML = newsData
-    .map(
-      (news) => `
-      <article class="news-card">
-        <img src="${news.image}" alt="${news.title}">
-        <div class="news-content">
-          <h3>${news.title}</h3>
-          <p>${news.description}</p>
-          <span class="news-tag">${news.tag}</span>
-        </div>
-      </article>
-    `
-    )
-    .join("");
-  
-  const navAuthLink = document.getElementById("navAuthLink");
-  const currentUserNews = JSON.parse(localStorage.getItem("currentUser"));
-  
-  if (navAuthLink && currentUserNews) {
-    navAuthLink.textContent = currentUserNews.username;
-    navAuthLink.href = "library.html";
-  }
+
+    await loadPosts();
+
+    postFilter.addEventListener("change", async function () {
+        await loadPosts();
+    });
+
+    if (currentUser) {
+        postForm.addEventListener("submit", async function (event) {
+            event.preventDefault();
+            await createPost();
+        });
+    }
+}
+
+async function loadUserGamesForPostForm() {
+    try {
+        const games = await apiRequest(`/ListaUsuario/getByUser?usuarioId=${currentUser.id}`, "GET");
+
+        if (!games || games.length === 0) {
+            postGame.innerHTML = `
+                <option value="">No linked game</option>
+            `;
+            return;
+        }
+
+        postGame.innerHTML = `
+            <option value="">No linked game</option>
+            ${games.map(game => `
+                <option value="${game.videojuegoId}">
+                    ${game.titulo}
+                </option>
+            `).join("")}
+        `;
+
+    } catch (error) {
+        console.error(error);
+        postGame.innerHTML = `
+            <option value="">No linked game</option>
+        `;
+    }
+}
+
+async function loadPosts() {
+    const selectedType = postFilter.value;
+
+    postsContainer.innerHTML = `
+        <div class="empty-box">Loading posts...</div>
+    `;
+
+    let endpoint = "/Post/getList";
+
+    if (selectedType) {
+        endpoint += `?tipo=${encodeURIComponent(selectedType)}`;
+    }
+
+    try {
+        const posts = await apiRequest(endpoint, "GET");
+
+        if (!posts || posts.length === 0) {
+            postsContainer.innerHTML = `
+                <div class="empty-box">No posts yet.</div>
+            `;
+            return;
+        }
+
+        postsContainer.innerHTML = posts
+            .map(post => createPostCard(post))
+            .join("");
+
+        attachPostDeleteButtons();
+
+    } catch (error) {
+        console.error(error);
+
+        postsContainer.innerHTML = `
+            <div class="empty-box">Could not load posts.</div>
+        `;
+    }
+}
+
+function createPostCard(post) {
+    const id = post.id || post.Id;
+    const usuarioId = post.usuarioId || post.UsuarioId;
+    const username = post.username || post.Username || "Unknown user";
+    const type = post.tipo || post.Tipo || "post";
+    const title = post.titulo || post.Titulo || "Untitled";
+    const content = post.contenido || post.Contenido || "";
+    const gameTitle = post.videojuegoTitulo || post.VideojuegoTitulo || "";
+    const image = post.imagenUrl || post.ImagenUrl || "";
+    const date = post.fechaPublicacion || post.FechaPublicacion || "";
+
+    const canDelete = currentUser && Number(currentUser.id) === Number(usuarioId);
+
+    return `
+        <article class="post-card">
+            ${image ? `
+                <img 
+                    src="${image}" 
+                    alt="${gameTitle || title}"
+                    onerror="this.style.display='none';"
+                >
+            ` : ""}
+
+            <div class="post-card-content">
+                <div class="post-card-top">
+                    <span class="post-type ${type}">${formatPostType(type)}</span>
+                    <span class="post-date">${formatPostDate(date)}</span>
+                </div>
+
+                <h3>${title}</h3>
+
+                <p class="post-author">
+                    By <strong>${username}</strong>
+                    ${gameTitle ? ` · Linked game: <strong>${gameTitle}</strong>` : ""}
+                </p>
+
+                <p class="post-content">${content}</p>
+
+                ${canDelete ? `
+                    <button 
+                        type="button" 
+                        class="delete-btn js-delete-post" 
+                        data-post-id="${id}"
+                    >
+                        Delete
+                    </button>
+                ` : ""}
+            </div>
+        </article>
+    `;
+}
+
+async function createPost() {
+    const type = postType.value;
+    const title = postTitle.value.trim();
+    const content = postContent.value.trim();
+    const videojuegoId = postGame.value ? Number(postGame.value) : null;
+
+    if (!type || !title || !content) {
+        postMessage.textContent = "Type, title and content are required.";
+        postMessage.style.color = "#ff5d73";
+        return;
+    }
+
+    try {
+        await apiRequest("/Post/add", "POST", {
+            data: {
+                usuarioId: currentUser.id,
+                videojuegoId: videojuegoId,
+                tipo: type,
+                titulo: title,
+                contenido: content
+            },
+            pagination: null,
+            filters: []
+        });
+
+        postMessage.textContent = "Post published successfully.";
+        postMessage.style.color = "#2dd4bf";
+
+        postForm.reset();
+
+        await loadPosts();
+
+    } catch (error) {
+        postMessage.textContent = error.message;
+        postMessage.style.color = "#ff5d73";
+    }
+}
+
+function attachPostDeleteButtons() {
+    document.querySelectorAll(".js-delete-post").forEach(button => {
+        button.addEventListener("click", async function () {
+            const postId = button.dataset.postId;
+
+            if (!confirm("Delete this post?")) {
+                return;
+            }
+
+            try {
+                await apiRequest(`/Post/delete?id=${postId}&usuarioId=${currentUser.id}`, "DELETE");
+                await loadPosts();
+            } catch (error) {
+                alert(error.message);
+            }
+        });
+    });
+}
+
+function formatPostType(type) {
+    if (type === "lfg") return "LFG";
+    if (type === "blog") return "Blog";
+    if (type === "review") return "Review";
+    if (type === "news") return "News";
+    return "Post";
+}
+
+function formatPostDate(dateValue) {
+    if (!dateValue) {
+        return "";
+    }
+
+    const date = new Date(dateValue);
+
+    if (Number.isNaN(date.getTime())) {
+        return "";
+    }
+
+    return date.toLocaleDateString();
+}

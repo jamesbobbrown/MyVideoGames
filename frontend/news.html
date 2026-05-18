@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>News - My Video Game List</title>
+  <title>Community - My Video Game List</title>
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
@@ -11,24 +11,90 @@
     <a href="index.html" class="logo">MyVideoGames</a>
 
     <nav class="main-nav">
-        <a href="index.html">Home</a>
-        <a href="news.html">News</a>
-        <a href="library.html">Library</a>
+      <a href="index.html">Home</a>
+      <a href="news.html" class="active">News</a>
+      <a href="library.html">Library</a>
     </nav>
 
     <div id="user-menu-container"></div>
-</header>
-  <main class="page-container">
-    <section class="page-intro">
-      <h1>Gaming News</h1>
-      <p>Latest updates, DLCs, events and releases.</p>
+  </header>
+
+  <main class="community-page">
+    <section class="community-hero">
+      <p class="hero-kicker">Community</p>
+      <h1>News, blogs and LFG posts</h1>
+      <p>
+        Share updates, reviews, opinions and looking-for-group posts linked to games in your library.
+      </p>
     </section>
 
-    <section id="newsContainer" class="news-grid"></section>
+    <section class="community-layout">
+      <section class="community-panel create-post-panel">
+        <div class="section-header">
+          <h2>Create post</h2>
+          <p>Write a blog, review, news post or LFG message.</p>
+        </div>
+
+        <form id="postForm" class="post-form">
+          <div class="form-field">
+            <label for="postType">Post type</label>
+            <select id="postType" required>
+              <option value="">Select type</option>
+              <option value="news">News</option>
+              <option value="blog">Blog</option>
+              <option value="review">Review</option>
+              <option value="lfg">LFG / Looking for group</option>
+            </select>
+          </div>
+
+          <div class="form-field">
+            <label for="postGame">Linked game</label>
+            <select id="postGame">
+              <option value="">No linked game</option>
+            </select>
+          </div>
+
+          <div class="form-field full-post-field">
+            <label for="postTitle">Title</label>
+            <input type="text" id="postTitle" placeholder="Example: Looking for people to play Elden Ring" required>
+          </div>
+
+          <div class="form-field full-post-field">
+            <label for="postContent">Content</label>
+            <textarea id="postContent" placeholder="Write your post..." required></textarea>
+          </div>
+
+          <button type="submit" class="btn btn-primary">Publish post</button>
+
+          <p id="postMessage" class="message"></p>
+        </form>
+      </section>
+
+      <section class="community-panel">
+        <div class="section-header community-feed-header">
+          <div>
+            <h2>Community feed</h2>
+            <p>Latest posts from users.</p>
+          </div>
+
+          <select id="postFilter">
+            <option value="">All posts</option>
+            <option value="news">News</option>
+            <option value="blog">Blog</option>
+            <option value="review">Reviews</option>
+            <option value="lfg">LFG</option>
+          </select>
+        </div>
+
+        <div id="postsContainer" class="posts-feed">
+          <div class="empty-box">Loading posts...</div>
+        </div>
+      </section>
+    </section>
   </main>
 
-  
   <script src="js/auth.js"></script>
+  <script src="js/api.js"></script>
   <script src="js/news.js"></script>
 </body>
 </html>

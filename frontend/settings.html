@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - MyVideoGames</title>
+
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <header class="site-header">
+        <a href="index.html" class="logo">MyVideoGames</a>
+
+        <nav class="main-nav">
+            <a href="index.html">Home</a>
+            <a href="news.html">News</a>
+            <a href="library.html">Library</a>
+        </nav>
+
+        <div id="user-menu-container"></div>
+    </header>
+
+    <main class="settings-page">
+        <section class="settings-hero">
+            <p class="hero-kicker">Account settings</p>
+            <h1>Settings</h1>
+            <p>Update your username, email and password.</p>
+        </section>
+
+        <section class="settings-layout">
+            <div class="settings-card">
+                <div class="section-header">
+                    <h2>Profile information</h2>
+                    <p>These details are used for your account and profile.</p>
+                </div>
+
+                <form id="settingsForm" class="settings-form">
+                    <div class="form-field">
+                        <label for="settingsUsername">Username</label>
+                        <input type="text" id="settingsUsername" required>
+                    </div>
+
+                    <div class="form-field">
+                        <label for="settingsEmail">Email</label>
+                        <input type="email" id="settingsEmail" required>
+                    </div>
+
+                    <div class="form-field">
+                        <label for="settingsPassword">New password</label>
+                        <input type="password" id="settingsPassword" placeholder="Leave empty to keep current password">
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">Save changes</button>
+
+                    <p id="settingsMessage" class="message"></p>
+                </form>
+            </div>
+
+            <div class="settings-card">
+                <div class="section-header">
+                    <h2>Account preview</h2>
+                    <p>This is how your profile appears in the app.</p>
+                </div>
+
+                <div class="settings-preview">
+                    <div id="settingsAvatar" class="profile-avatar">U</div>
+
+                    <div>
+                        <h3 id="settingsPreviewUsername">User</h3>
+                        <p id="settingsPreviewEmail">email@example.com</p>
+                    </div>
+                </div>
+
+                <div class="settings-note">
+                    <strong>Note:</strong>
+                    For now your avatar uses the first letter of your username. Later we can add profile pictures with an avatar URL.
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="js/auth.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/settings.js"></script>
+</body>
+</html>

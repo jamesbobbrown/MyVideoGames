@@ -12,6 +12,7 @@ const searchResults = document.getElementById("searchResults");
 const selectedGamePreview = document.getElementById("selectedGamePreview");
 const selectedGameIdInput = document.getElementById("selectedGameId");
 const selectedGameTitleInput = document.getElementById("selectedGameTitle");
+const recommendationsContainer = document.getElementById("recommendationsContainer");
 
 const currentUser = getLoggedUser();
 
@@ -345,6 +346,7 @@ quickAddForm.addEventListener("submit", async function (e) {
         }
         
         await loadUserList();
+        await loadRecommendations();
 
     } catch (error) {
         alert(error.message);
@@ -365,6 +367,123 @@ document.addEventListener("click", function (e) {
         searchResults.style.display = "none";
     }
 });
+async function loadRecommendations() {
+    if (!currentUser?.id || !recommendationsContainer) {
+        return;
+    }
+
+    try {
+        const recommendations = await getRecommendationsForUser();
+
+        if (!recommendations || recommendations.length === 0) {
+            recommendationsContainer.innerHTML = `
+                <div class="empty-box">
+                    Add more games to your lists to improve recommendations.
+                </div>
+            `;
+            return;
+        }
+
+        recommendationsContainer.innerHTML = recommendations
+            .map(game => createRecommendationCard(game))
+            .join("");
+
+        attachRecommendationButtons();
+
+    } catch (error) {
+        console.error(error);
+
+        recommendationsContainer.innerHTML = `
+            <div class="empty-box">
+                Could not load recommendations.
+            </div>
+        `;
+    }
+}
+
+function createRecommendationCard(game) {
+    const rawgId = game.rawgId || game.RawgId;
+    const title = game.titulo || game.Titulo || "Unknown game";
+    const genre = game.genero || game.Genero || "Unknown genre";
+    const rating = game.rating || game.Rating || "N/A";
+    const image = game.imagenUrl || game.ImagenUrl || "";
+
+    const safeGame = encodeURIComponent(JSON.stringify({
+        rawgId: rawgId,
+        titulo: title,
+        genero: genre,
+        rating: rating,
+        imagenUrl: image,
+        fechaLanzamiento: game.fechaLanzamiento || game.FechaLanzamiento || null
+    }));
+
+    return `
+        <article class="recommendation-card">
+            <img 
+                src="${image}" 
+                alt="${title}"
+                onerror="this.closest('.recommendation-card').remove();"
+            >
+
+            <div class="recommendation-content">
+                <h3>${title}</h3>
+                <p>${genre}</p>
+                <span>⭐ ${rating}</span>
+
+                <div class="recommendation-actions">
+                    <button 
+                        type="button" 
+                        class="game-button js-recommendation-add"
+                        data-rawg-id="${rawgId}"
+                        data-game="${safeGame}"
+                    >
+                        Add to my list
+                    </button>
+
+                    <a href="game.html?rawgId=${rawgId}" class="game-detail-link">
+                        View details
+                    </a>
+                </div>
+            </div>
+        </article>
+    `;
+}
+
+function attachRecommendationButtons() {
+    document.querySelectorAll(".js-recommendation-add").forEach(button => {
+        button.addEventListener("click", async function () {
+            const rawgId = button.dataset.rawgId;
+            const encodedGame = button.dataset.game;
+
+            try {
+                const game = JSON.parse(decodeURIComponent(encodedGame));
+
+                button.textContent = "Adding...";
+                button.disabled = true;
+
+                await addRawgGameToMyList(game);
+
+                button.textContent = "✓ In your list";
+                button.classList.add("added");
+                button.disabled = true;
+
+                await loadUserList();
+
+                if (typeof checkAndShowNewAchievements === "function") {
+                    await checkAndShowNewAchievements();
+                }
+
+            } catch (error) {
+                console.error(error);
+                alert("Could not add recommended game.");
+
+                button.textContent = "Add to my list";
+                button.disabled = false;
+            }
+        });
+    });
+}
 
 updateRatingVisibility();
 loadUserList();
+loadRecommendations();
