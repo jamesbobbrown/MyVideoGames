@@ -2240,3 +2240,190 @@ button {
       max-width: none;
   }
 }
+/* ===============================
+   PUBLIC PROFILES + RANKING
+================================ */
+
+.user-profile-link {
+    color: var(--secondary);
+    font-weight: 900;
+}
+
+.user-profile-link:hover {
+    color: white;
+}
+
+.ranking-list {
+    display: grid;
+    gap: 12px;
+}
+
+.ranking-item {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 16px 18px;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 16px;
+    align-items: center;
+    box-shadow: var(--shadow);
+}
+
+.ranking-position {
+    width: 46px;
+    height: 46px;
+    border-radius: 14px;
+    background: rgba(124, 92, 255, 0.18);
+    color: #d8d0ff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 900;
+}
+
+.ranking-info h3 {
+    margin-bottom: 5px;
+}
+
+.ranking-info p {
+    color: var(--muted);
+}
+
+.ranking-score {
+    background: rgba(45, 212, 191, 0.14);
+    border: 1px solid rgba(45, 212, 191, 0.28);
+    color: #b8fff4;
+    padding: 8px 12px;
+    border-radius: 999px;
+    font-weight: 900;
+    white-space: nowrap;
+}
+
+.public-list-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(170px, 1fr));
+    gap: 18px;
+}
+
+.public-list-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+}
+
+.public-list-card img {
+    width: 100%;
+    height: 190px;
+    object-fit: cover;
+    background: #1f2937;
+}
+
+.public-list-card div {
+    padding: 14px;
+}
+
+.public-list-card h3 {
+    margin-bottom: 6px;
+    font-size: 16px;
+}
+
+.public-list-card p {
+    color: var(--muted);
+    margin-bottom: 8px;
+}
+
+@media (max-width: 1000px) {
+    .public-list-grid {
+        grid-template-columns: repeat(3, minmax(160px, 1fr));
+    }
+}
+
+@media (max-width: 700px) {
+    .public-list-grid {
+        grid-template-columns: repeat(2, minmax(140px, 1fr));
+    }
+
+    .ranking-item {
+        grid-template-columns: 1fr;
+        align-items: flex-start;
+    }
+
+    .ranking-score {
+        width: fit-content;
+    }
+}
+
+@media (max-width: 500px) {
+    .public-list-grid {
+        grid-template-columns: 1fr;
+    }
+}
+/* ===============================
+   LIBRARY REVIEWS
+================================ */
+
+.full-library-field {
+    grid-column: 1 / -1;
+}
+
+.full-library-field textarea {
+    width: 100%;
+    min-height: 110px;
+    background: #0f1624;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: white;
+    border-radius: 14px;
+    padding: 14px;
+    outline: none;
+    font-size: 15px;
+    resize: vertical;
+}
+
+.full-library-field textarea:focus {
+    border-color: rgba(124, 92, 255, 0.9);
+    box-shadow: 0 0 0 4px rgba(124, 92, 255, 0.18);
+}
+
+.list-item-expanded {
+    display: grid;
+    grid-template-columns: 90px 1fr auto;
+    align-items: center;
+}
+
+.list-item-image {
+    width: 90px;
+    height: 90px;
+    border-radius: 14px;
+    object-fit: cover;
+    background: #1f2937;
+}
+
+.list-review {
+    margin-top: 8px;
+    color: #d1d5db;
+    line-height: 1.5;
+    font-style: italic;
+}
+
+.muted-review {
+    color: var(--muted);
+}
+
+.small-edit-btn {
+    padding: 9px 12px;
+    font-size: 13px;
+}
+
+@media (max-width: 800px) {
+    .list-item-expanded {
+        grid-template-columns: 1fr;
+    }
+
+    .list-item-image {
+        width: 100%;
+        height: 180px;
+    }
+}

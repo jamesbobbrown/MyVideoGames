@@ -159,4 +159,25 @@ public async Task<ActionResult<UsuarioDTO>> Update([FromBody] UsuarioDTO dto)
         Email = usuario.EMAIL
     });
 }
+[HttpGet("getPublic")]
+public async Task<ActionResult<UsuarioDTO>> GetPublic([FromQuery] int id)
+{
+    var usuario = await _context.TA_USUARIO
+        .Where(u => u.ID == id)
+        .Select(u => new UsuarioDTO
+        {
+            Id = u.ID,
+            Username = u.USERNAME,
+            Email = null,
+            Password = null
+        })
+        .FirstOrDefaultAsync();
+
+    if (usuario == null)
+    {
+        return NotFound("User not found.");
+    }
+
+    return Ok(usuario);
+}
 }

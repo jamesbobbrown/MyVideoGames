@@ -118,7 +118,7 @@ function createPostCard(post) {
     const date = post.fechaPublicacion || post.FechaPublicacion || "";
 
     const canDelete = currentUser && Number(currentUser.id) === Number(usuarioId);
-
+const profileLink = `public-profile.html?userId=${usuarioId}`;
     return `
         <article class="post-card">
             ${image ? `
@@ -138,7 +138,7 @@ function createPostCard(post) {
                 <h3>${title}</h3>
 
                 <p class="post-author">
-                    By <strong>${username}</strong>
+                    By <a href="${profileLink}" class="user-profile-link"><strong>${username}</strong></a>
                     ${gameTitle ? ` · Linked game: <strong>${gameTitle}</strong>` : ""}
                 </p>
 

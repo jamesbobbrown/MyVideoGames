@@ -11,4 +11,6 @@ public class ListaUsuarioDTO
     public string? Estado { get; set; }
 
     public int? Puntuacion { get; set; }
+
+    public string? Review { get; set; }
 }

@@ -30,7 +30,7 @@ public class ListaUsuarioController : ControllerBase
         }
 
         string estado = string.IsNullOrWhiteSpace(req.Data.Estado)
-            ? "Plan to play"
+            ? "toplay"
             : req.Data.Estado;
 
         var usuario = await _context.TA_USUARIO.FindAsync(req.Data.UsuarioId.Value);
@@ -54,10 +54,14 @@ public class ListaUsuarioController : ControllerBase
 
         if (existing != null)
         {
-            return Ok(new
+            return Ok(new ListaUsuarioDTO
             {
-                message = "Already added",
-                id = existing.ID
+                Id = existing.ID,
+                UsuarioId = existing.USUARIO_ID,
+                VideojuegoId = existing.VIDEOJUEGO_ID,
+                Estado = existing.ESTADO,
+                Puntuacion = existing.PUNTUACION,
+                Review = existing.REVIEW
             });
         }
 
@@ -67,6 +71,7 @@ public class ListaUsuarioController : ControllerBase
             VIDEOJUEGO_ID = req.Data.VideojuegoId.Value,
             ESTADO = estado,
             PUNTUACION = req.Data.Puntuacion,
+            REVIEW = req.Data.Review,
             FECHA_AGREGADO = DateTime.Now
         };
 
@@ -79,7 +84,8 @@ public class ListaUsuarioController : ControllerBase
             UsuarioId = nuevaEntrada.USUARIO_ID,
             VideojuegoId = nuevaEntrada.VIDEOJUEGO_ID,
             Estado = nuevaEntrada.ESTADO,
-            Puntuacion = nuevaEntrada.PUNTUACION
+            Puntuacion = nuevaEntrada.PUNTUACION,
+            Review = nuevaEntrada.REVIEW
         };
 
         return Ok(result);
@@ -114,12 +120,49 @@ public class ListaUsuarioController : ControllerBase
                     rawgId = juego.RAWG_ID,
                     estado = listaItem.ESTADO,
                     puntuacion = listaItem.PUNTUACION,
+                    review = listaItem.REVIEW,
                     fechaAgregado = listaItem.FECHA_AGREGADO
                 }
             )
             .ToListAsync();
 
         return Ok(lista);
+    }
+
+    [HttpPut("update")]
+    public async Task<IActionResult> Update([FromBody] ListaUsuarioDTO dto)
+    {
+        if (dto.Id == null)
+        {
+            return BadRequest("List item ID is required.");
+        }
+
+        var item = await _context.TA_LISTA_USUARIO.FindAsync(dto.Id.Value);
+
+        if (item == null)
+        {
+            return NotFound("List item not found.");
+        }
+
+        if (!string.IsNullOrWhiteSpace(dto.Estado))
+        {
+            item.ESTADO = dto.Estado;
+        }
+
+        item.PUNTUACION = dto.Puntuacion;
+        item.REVIEW = dto.Review;
+
+        await _context.SaveChangesAsync();
+
+        return Ok(new ListaUsuarioDTO
+        {
+            Id = item.ID,
+            UsuarioId = item.USUARIO_ID,
+            VideojuegoId = item.VIDEOJUEGO_ID,
+            Estado = item.ESTADO,
+            Puntuacion = item.PUNTUACION,
+            Review = item.REVIEW
+        });
     }
 
     [HttpDelete("delete")]

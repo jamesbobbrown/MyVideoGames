@@ -24,8 +24,8 @@ async function loadProfile() {
 
         const stats = calculateStats(items);
         const achievements = calculateAchievements(items, stats);
-
-        renderProfile(user, stats, achievements, items);
+        const ranking = calculateProfileRanking(items);
+       renderProfile(user, stats, achievements, items, ranking);
 
     } catch (error) {
         console.error(error);
@@ -159,7 +159,7 @@ function calculateAchievements(items, stats) {
     return achievements;
 }
 
-function renderProfile(user, stats, achievements, items) {
+function renderProfile(user, stats, achievements, items, ranking) {
     const container = document.getElementById("profileContainer");
     const username = user.username || user.email || "User";
     const firstLetter = username.charAt(0).toUpperCase();
@@ -208,6 +208,16 @@ function renderProfile(user, stats, achievements, items) {
 
             <div class="achievement-grid-profile">
                 ${achievements.map(createAchievementCard).join("")}
+            </div>
+        </section>
+        <section class="profile-section">
+            <div class="section-title">
+                <h2>Your ranked games</h2>
+                <p>Your scored games ordered from highest to lowest.</p>
+            </div>
+
+            <div class="ranking-list">
+                ${renderProfileRanking(ranking)}
             </div>
         </section>
 
@@ -271,4 +281,40 @@ function formatStatus(status) {
     if (status === "toplay") return "To Play";
     if (status === "favorite") return "Favorite";
     return status;
+}
+function calculateProfileRanking(items) {
+    return items
+        .filter(item =>
+            item.puntuacion !== null &&
+            item.puntuacion !== undefined
+        )
+        .sort((a, b) => Number(b.puntuacion) - Number(a.puntuacion));
+}
+function renderProfileRanking(ranking) {
+    if (!ranking || ranking.length === 0) {
+        return `<div class="empty-box">You have not rated any games yet.</div>`;
+    }
+
+    return ranking
+        .map((item, index) => `
+            <div class="ranking-item">
+                <div class="ranking-position">#${index + 1}</div>
+
+                <div class="ranking-info">
+                    <h3>${item.titulo}</h3>
+
+                    <p>
+                        ${formatStatus(item.estado)}
+                        ${item.genero ? `· ${item.genero}` : ""}
+                    </p>
+
+                    ${item.review ? `<p class="list-review">"${item.review}"</p>` : ""}
+                </div>
+
+                <div class="ranking-score">
+                    ⭐ ${item.puntuacion}/10
+                </div>
+            </div>
+        `)
+        .join("");
 }

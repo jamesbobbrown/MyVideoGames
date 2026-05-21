@@ -13,7 +13,7 @@ const selectedGamePreview = document.getElementById("selectedGamePreview");
 const selectedGameIdInput = document.getElementById("selectedGameId");
 const selectedGameTitleInput = document.getElementById("selectedGameTitle");
 const recommendationsContainer = document.getElementById("recommendationsContainer");
-
+const gameReviewInput = document.getElementById("gameReview");
 const currentUser = getLoggedUser();
 
 let searchTimeout = null;
@@ -73,10 +73,25 @@ function renderList(container, items, emptyText) {
     container.innerHTML = items
         .map(
             (item) => `
-                <div class="list-item">
+                <div class="list-item list-item-expanded">
+                    ${item.imagenUrl ? `
+                        <img 
+                            src="${item.imagenUrl}" 
+                            alt="${item.titulo}"
+                            class="list-item-image"
+                            onerror="this.style.display='none';"
+                        >
+                    ` : ""}
+
                     <div class="list-item-left">
                         <h3>${item.titulo}</h3>
                         <p>Status: ${formatStatus(item.estado)}</p>
+
+                        ${
+                            item.review
+                                ? `<p class="list-review">"${item.review}"</p>`
+                                : `<p class="list-review muted-review">No review yet.</p>`
+                        }
                     </div>
 
                     <div class="list-item-right">
@@ -85,7 +100,14 @@ function renderList(container, items, emptyText) {
                                 ? `<span class="rating-pill">⭐ ${item.puntuacion}/10</span>`
                                 : ""
                         }
-                        <button class="delete-btn" onclick="deleteListItem(${item.id})">Delete</button>
+
+                        <button class="btn btn-secondary small-edit-btn" onclick="openEditListItem(${encodeURIComponent(JSON.stringify(item))})">
+                            Edit
+                        </button>
+
+                        <button class="delete-btn" onclick="deleteListItem(${item.id})">
+                            Delete
+                        </button>
                     </div>
                 </div>
             `
@@ -320,12 +342,13 @@ quickAddForm.addEventListener("submit", async function (e) {
         const dbGame = await ensureGameExistsInDatabase(selectedExternalGame);
 
         await apiRequest("/ListaUsuario/add", "POST", {
-            data: {
-                usuarioId: currentUser.id,
-                videojuegoId: dbGame.id || dbGame.Id,
-                estado: status,
-                puntuacion: rating ? Number(rating) : null
-            },
+                data: {
+                    usuarioId: currentUser.id,
+                    videojuegoId: dbGame.id || dbGame.Id,
+                    estado: status,
+                    puntuacion: rating ? Number(rating) : null,
+                    review: gameReviewInput.value.trim() || null
+                },
             pagination: null,
             filters: []
         });
@@ -483,6 +506,47 @@ function attachRecommendationButtons() {
         });
     });
 }
+function openEditListItem(encodedItem) {
+    const item = JSON.parse(decodeURIComponent(encodedItem));
+
+    document.getElementById("editListItemId").value = item.id;
+    document.getElementById("editGameTitle").textContent = item.titulo;
+    document.getElementById("editGameStatus").value = item.estado;
+    document.getElementById("editGameRating").value = item.puntuacion ?? "";
+    document.getElementById("editGameReview").value = item.review || "";
+
+    document.getElementById("editListModalOverlay").classList.remove("hidden");
+    document.body.classList.add("modal-open");
+}
+
+function closeEditListItemModal() {
+    document.getElementById("editListModalOverlay").classList.add("hidden");
+    document.body.classList.remove("modal-open");
+}
+
+document.getElementById("editListForm").addEventListener("submit", async function (event) {
+    event.preventDefault();
+
+    const id = Number(document.getElementById("editListItemId").value);
+    const estado = document.getElementById("editGameStatus").value;
+    const rating = document.getElementById("editGameRating").value;
+    const review = document.getElementById("editGameReview").value.trim();
+
+    try {
+        await apiRequest("/ListaUsuario/update", "PUT", {
+            id: id,
+            estado: estado,
+            puntuacion: rating ? Number(rating) : null,
+            review: review || null
+        });
+
+        closeEditListItemModal();
+        await loadUserList();
+
+    } catch (error) {
+        alert(error.message);
+    }
+});
 
 updateRatingVisibility();
 loadUserList();
