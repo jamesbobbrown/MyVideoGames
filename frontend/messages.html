@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Messages - MyVideoGames</title>
+
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <header class="site-header">
+        <a href="index.html" class="logo">MyVideoGames</a>
+
+        <nav class="main-nav">
+            <a href="index.html">Home</a>
+            <a href="rankings.html">Rankings</a>
+            <a href="news.html">News</a>
+            <a href="library.html">Library</a>
+        </nav>
+
+        <div id="user-menu-container"></div>
+    </header>
+
+    <main class="messages-page">
+        <section class="messages-hero">
+            <p class="hero-kicker">Private messages</p>
+            <h1>Messages</h1>
+            <p>Talk with other users from the community and LFG posts.</p>
+        </section>
+
+        <section class="messages-layout">
+            <aside class="messages-sidebar">
+                <div class="section-header">
+                    <h2>Inbox</h2>
+                    <p>Your conversations.</p>
+                </div>
+
+                <div id="conversationList" class="conversation-list">
+                    <div class="empty-box">Loading conversations...</div>
+                </div>
+            </aside>
+
+            <section class="messages-chat">
+                <div id="chatHeader" class="chat-header">
+                    <h2>Select a conversation</h2>
+                    <p>Choose someone from your inbox or open a user profile and click Message.</p>
+                </div>
+
+                <div id="messagesList" class="messages-list">
+                    <div class="empty-box">No conversation selected.</div>
+                </div>
+
+                <form id="messageForm" class="message-form hidden">
+                    <textarea id="messageContent" placeholder="Write a message..." required></textarea>
+                    <button type="submit" class="btn btn-primary">Send</button>
+                </form>
+            </section>
+        </section>
+    </main>
+
+    <script src="js/auth.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/messages.js"></script>
+</body>
+</html>

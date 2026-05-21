@@ -130,40 +130,40 @@ public class ListaUsuarioController : ControllerBase
     }
 
     [HttpPut("update")]
-    public async Task<IActionResult> Update([FromBody] ListaUsuarioDTO dto)
+public async Task<IActionResult> Update([FromBody] ListaUsuarioDTO dto)
+{
+    if (dto.Id == null)
     {
-        if (dto.Id == null)
-        {
-            return BadRequest("List item ID is required.");
-        }
-
-        var item = await _context.TA_LISTA_USUARIO.FindAsync(dto.Id.Value);
-
-        if (item == null)
-        {
-            return NotFound("List item not found.");
-        }
-
-        if (!string.IsNullOrWhiteSpace(dto.Estado))
-        {
-            item.ESTADO = dto.Estado;
-        }
-
-        item.PUNTUACION = dto.Puntuacion;
-        item.REVIEW = dto.Review;
-
-        await _context.SaveChangesAsync();
-
-        return Ok(new ListaUsuarioDTO
-        {
-            Id = item.ID,
-            UsuarioId = item.USUARIO_ID,
-            VideojuegoId = item.VIDEOJUEGO_ID,
-            Estado = item.ESTADO,
-            Puntuacion = item.PUNTUACION,
-            Review = item.REVIEW
-        });
+        return BadRequest("List item ID is required.");
     }
+
+    var item = await _context.TA_LISTA_USUARIO.FindAsync(dto.Id.Value);
+
+    if (item == null)
+    {
+        return NotFound("List item not found.");
+    }
+
+    if (!string.IsNullOrWhiteSpace(dto.Estado))
+    {
+        item.ESTADO = dto.Estado;
+    }
+
+    item.PUNTUACION = dto.Puntuacion;
+    item.REVIEW = dto.Review;
+
+    await _context.SaveChangesAsync();
+
+    return Ok(new ListaUsuarioDTO
+    {
+        Id = item.ID,
+        UsuarioId = item.USUARIO_ID,
+        VideojuegoId = item.VIDEOJUEGO_ID,
+        Estado = item.ESTADO,
+        Puntuacion = item.PUNTUACION,
+        Review = item.REVIEW
+    });
+}
 
     [HttpDelete("delete")]
     public async Task<IActionResult> Delete([FromQuery] int id)
@@ -180,4 +180,56 @@ public class ListaUsuarioController : ControllerBase
 
         return Ok("List item deleted successfully.");
     }
+    [HttpGet("globalRanking")]
+public async Task<IActionResult> GetGlobalRanking(
+    [FromQuery] string? genre = null,
+    [FromQuery] int minRatings = 1)
+{
+    var query = _context.TA_LISTA_USUARIO
+        .Where(x => x.PUNTUACION != null)
+        .Join(
+            _context.TA_VIDEOJUEGO,
+            lista => lista.VIDEOJUEGO_ID,
+            juego => juego.ID,
+            (lista, juego) => new
+            {
+                lista,
+                juego
+            }
+        );
+
+    if (!string.IsNullOrWhiteSpace(genre))
+    {
+        query = query.Where(x => x.juego.GENERO.ToLower().Contains(genre.ToLower()));
+    }
+
+    var ranking = await query
+        .GroupBy(x => new
+        {
+            x.juego.ID,
+            x.juego.RAWG_ID,
+            x.juego.TITULO,
+            x.juego.GENERO,
+            x.juego.PLATAFORMA,
+            x.juego.IMAGEN_URL
+        })
+        .Select(g => new GameRankingDTO
+        {
+            VideojuegoId = g.Key.ID,
+            RawgId = g.Key.RAWG_ID,
+            Titulo = g.Key.TITULO,
+            Genero = g.Key.GENERO,
+            Plataforma = g.Key.PLATAFORMA,
+            ImagenUrl = g.Key.IMAGEN_URL,
+            AverageRating = Math.Round(g.Average(x => x.lista.PUNTUACION!.Value), 2),
+            RatingCount = g.Count(),
+            ReviewCount = g.Count(x => x.lista.REVIEW != null && x.lista.REVIEW != "")
+        })
+        .Where(x => x.RatingCount >= minRatings)
+        .OrderByDescending(x => x.AverageRating)
+        .ThenByDescending(x => x.RatingCount)
+        .ToListAsync();
+
+    return Ok(ranking);
+}
 }

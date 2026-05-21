@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Global Rankings - MyVideoGames</title>
+
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <header class="site-header">
+        <a href="index.html" class="logo">MyVideoGames</a>
+
+        <nav class="main-nav">
+            <a href="index.html">Home</a>
+            <a href="rankings.html" class="active">Rankings</a>
+            <a href="news.html">News</a>
+            <a href="library.html">Library</a>
+        </nav>
+
+        <div id="user-menu-container"></div>
+    </header>
+
+    <main class="ranking-page">
+        <section class="ranking-hero">
+            <p class="hero-kicker">Community ratings</p>
+            <h1>Global game rankings</h1>
+            <p>
+                See the highest rated games based on scores from all users.
+            </p>
+        </section>
+
+        <section class="ranking-filter-panel">
+            <div class="ranking-filters">
+                <div class="form-field">
+                    <label for="rankingGenre">Genre filter</label>
+                    <input type="text" id="rankingGenre" placeholder="Example: RPG, Action, Indie...">
+                </div>
+
+                <div class="form-field">
+                    <label for="rankingMinRatings">Minimum ratings</label>
+                    <select id="rankingMinRatings">
+                        <option value="1">At least 1 rating</option>
+                        <option value="2">At least 2 ratings</option>
+                        <option value="3">At least 3 ratings</option>
+                        <option value="5">At least 5 ratings</option>
+                    </select>
+                </div>
+
+                <button type="button" class="btn btn-primary" id="rankingApplyButton">
+                    Apply filters
+                </button>
+            </div>
+        </section>
+
+        <section class="ranking-results-section">
+            <div id="globalRankingContainer" class="global-ranking-list">
+                <p class="loading-message">Loading rankings...</p>
+            </div>
+        </section>
+    </main>
+
+    <script src="js/auth.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/rankings.js"></script>
+</body>
+</html>

@@ -178,8 +178,10 @@ function renderProfile(user, stats, achievements, items, ranking) {
                 </div>
 
                 <div class="profile-actions">
-                    <a href="library.html" class="btn btn-primary">Go to Library</a>
-                    <a href="settings.html" class="btn btn-secondary">Settings</a>
+                    <a href="news.html" class="btn btn-primary">Community</a>
+                    <a href="messages.html?userId=${userId}&username=${encodeURIComponent(username)}" class="btn btn-secondary">
+                        Message user
+                    </a>
                 </div>
             </div>
         </section>

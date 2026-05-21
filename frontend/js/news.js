@@ -143,7 +143,12 @@ const profileLink = `public-profile.html?userId=${usuarioId}`;
                 </p>
 
                 <p class="post-content">${content}</p>
-
+                <a 
+                    href="messages.html?userId=${usuarioId}&username=${encodeURIComponent(username)}"
+                    class="btn btn-secondary small-message-btn"
+                >
+                    Message user
+                </a>
                 ${canDelete ? `
                     <button 
                         type="button" 

@@ -71,8 +71,10 @@ function renderList(container, items, emptyText) {
     }
 
     container.innerHTML = items
-        .map(
-            (item) => `
+        .map((item) => {
+            const safeItem = encodeURIComponent(JSON.stringify(item));
+
+            return `
                 <div class="list-item list-item-expanded">
                     ${item.imagenUrl ? `
                         <img 
@@ -101,17 +103,25 @@ function renderList(container, items, emptyText) {
                                 : ""
                         }
 
-                        <button class="btn btn-secondary small-edit-btn" onclick="openEditListItem(${encodeURIComponent(JSON.stringify(item))})">
+                        <button 
+                            type="button"
+                            class="btn btn-secondary small-edit-btn" 
+                            onclick="openEditListItem('${safeItem}')"
+                        >
                             Edit
                         </button>
 
-                        <button class="delete-btn" onclick="deleteListItem(${item.id})">
+                        <button 
+                            type="button"
+                            class="delete-btn" 
+                            onclick="deleteListItem(${item.id})"
+                        >
                             Delete
                         </button>
                     </div>
                 </div>
-            `
-        )
+            `;
+        })
         .join("");
 }
 
@@ -517,6 +527,43 @@ function openEditListItem(encodedItem) {
 
     document.getElementById("editListModalOverlay").classList.remove("hidden");
     document.body.classList.add("modal-open");
+}
+
+function closeEditListItemModal() {
+    document.getElementById("editListModalOverlay").classList.add("hidden");
+    document.body.classList.remove("modal-open");
+}
+
+const editListForm = document.getElementById("editListForm");
+
+if (editListForm) {
+    editListForm.addEventListener("submit", async function (event) {
+        event.preventDefault();
+
+        const id = Number(document.getElementById("editListItemId").value);
+        const estado = document.getElementById("editGameStatus").value;
+        const rating = document.getElementById("editGameRating").value;
+        const review = document.getElementById("editGameReview").value.trim();
+
+        try {
+            await apiRequest("/ListaUsuario/update", "PUT", {
+                id: id,
+                estado: estado,
+                puntuacion: rating ? Number(rating) : null,
+                review: review || null
+            });
+
+            closeEditListItemModal();
+            await loadUserList();
+
+            if (typeof loadRecommendations === "function") {
+                await loadRecommendations();
+            }
+
+        } catch (error) {
+            alert(error.message);
+        }
+    });
 }
 
 function closeEditListItemModal() {

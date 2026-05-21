@@ -13,4 +13,6 @@ public class AppDbContext : DbContext
     public DbSet<TA_LISTA_USUARIO> TA_LISTA_USUARIO { get; set; }
 
     public DbSet<TA_POST> TA_POST { get; set; }
+
+    public DbSet<TA_MENSAJE> TA_MENSAJE { get; set; }
 }

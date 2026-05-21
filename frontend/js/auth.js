@@ -168,6 +168,7 @@ function renderUserMenu() {
 
               <a href="library.html" class="dropdown-item">My list</a>
               <a href="profile.html" class="dropdown-item">Profile</a>
+              <a href="messages.html" class="dropdown-item">Messages</a>
               <a href="settings.html" class="dropdown-item">Settings</a>
 
               <hr>
