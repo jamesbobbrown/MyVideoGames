@@ -1,10 +1,45 @@
 let homeCategories = [];
 let carouselIndexes = {};
+let homeAddClickHandlerReady = false;
 
 document.addEventListener("DOMContentLoaded", function () {
     renderHomeHeroActions();
+    setupHomeAddClickHandler();
     loadHomeCategories();
 });
+
+function setupHomeAddClickHandler() {
+    if (homeAddClickHandlerReady) {
+        return;
+    }
+
+    homeAddClickHandlerReady = true;
+
+    document.addEventListener("click", async function (event) {
+        const loginButton = event.target.closest("[data-login-button='true']");
+        const addButton = event.target.closest(".js-home-add-button");
+
+        if (!loginButton && !addButton) {
+            return;
+        }
+
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+
+        if (loginButton) {
+            goToLogin();
+            return false;
+        }
+
+        const rawgId = addButton.dataset.rawgId;
+        const encodedGame = addButton.dataset.game;
+
+        await handleAddRawgGame(encodedGame, rawgId);
+
+        return false;
+    }, true);
+}
 
 function renderHomeHeroActions() {
     const container = document.getElementById("homeHeroActions");
@@ -276,6 +311,7 @@ function createRawgGameCard(game) {
 
                 <div class="game-card-actions">
                     ${buttonHtml}
+
                     <a href="game.html?rawgId=${rawgId}" class="game-detail-link">
                         View details
                     </a>
@@ -286,25 +322,8 @@ function createRawgGameCard(game) {
 }
 
 function attachHomeAddButtonEvents() {
-    document.querySelectorAll("[data-login-button='true']").forEach((button) => {
-        button.addEventListener("click", function (event) {
-            event.preventDefault();
-            event.stopPropagation();
-            goToLogin();
-        });
-    });
-
-    document.querySelectorAll(".js-home-add-button").forEach((button) => {
-        button.addEventListener("click", async function (event) {
-            event.preventDefault();
-            event.stopPropagation();
-
-            const rawgId = button.dataset.rawgId;
-            const encodedGame = button.dataset.game;
-
-            await handleAddRawgGame(encodedGame, rawgId);
-        });
-    });
+    // The add/login button clicks are handled globally by setupHomeAddClickHandler().
+    // This prevents the page from reloading and prevents duplicate event handlers.
 }
 
 function markGameAsAdded(rawgId) {

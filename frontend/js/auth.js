@@ -58,36 +58,35 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 async function handleRegister(e) {
-  e.preventDefault();
+    e.preventDefault();
 
-  const registerMessage = document.getElementById("registerMessage");
+    const registerMessage = document.getElementById("registerMessage");
 
-  const username = document.getElementById("registerUsername").value.trim();
-  const email = document.getElementById("registerEmail").value.trim();
-  const password = document.getElementById("registerPassword").value.trim();
+    const username = document.getElementById("registerUsername").value.trim();
+    const email = document.getElementById("registerEmail").value.trim();
+    const password = document.getElementById("registerPassword").value.trim();
 
-  try {
-      const result = await apiRequest("/Usuario/register", "POST", {
-          username: username,
-          email: email,
-          password: password
-      });
+    try {
+        const result = await apiRequest("/Usuario/register", "POST", {
+            username: username,
+            email: email,
+            password: password
+        });
 
-      saveLoggedUser(result);
+        saveLoggedUser(result);
 
-      registerMessage.textContent = "Account created successfully. Redirecting...";
-      registerMessage.style.color = "#2dd4bf";
-      
-      setTimeout(() => {
-          window.location.href = "index.html";
-      }, 800);
+        registerMessage.textContent = "Account created successfully. Redirecting...";
+        registerMessage.style.color = "#2dd4bf";
 
-  } catch (error) {
-      registerMessage.textContent = error.message;
-      registerMessage.style.color = "#ff5d73";
-  }
+        setTimeout(() => {
+            window.location.href = "index.html";
+        }, 800);
+
+    } catch (error) {
+        registerMessage.textContent = error.message;
+        registerMessage.style.color = "#ff5d73";
+    }
 }
-
 async function handleLogin(e) {
   e.preventDefault();
 

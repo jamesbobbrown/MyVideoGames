@@ -80,11 +80,7 @@ async function addRawgGameToMyList(game) {
         data: {
             usuarioId: user.id,
             videojuegoId: videojuegoId,
-
-            // IMPORTANT:
-            // This must match your Library filters.
             estado: "toplay",
-
             puntuacion: null
         },
         pagination: null,
@@ -129,6 +125,7 @@ function getPlatformsFromRawg(game) {
         .filter(Boolean)
         .join(", ");
 }
+
 async function getRecommendationsForUser() {
     const user = getLoggedUser();
 

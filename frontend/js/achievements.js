@@ -38,6 +38,7 @@ async function initializeAchievementMemory() {
     try {
         const items = await apiRequest(`/ListaUsuario/getByUser?usuarioId=${user.id}`);
         const achievements = calculateAchievementsFromItems(items);
+
         const unlockedIds = achievements
             .filter(a => a.unlocked)
             .map(a => a.id);
@@ -56,6 +57,8 @@ async function checkAndShowNewAchievements() {
     }
 
     try {
+        createAchievementToastContainer();
+
         const items = await apiRequest(`/ListaUsuario/getByUser?usuarioId=${user.id}`);
         const achievements = calculateAchievementsFromItems(items);
 
