@@ -76,7 +76,7 @@ async function addRawgGameToMyList(game) {
 
     const videojuegoId = savedGame.id || savedGame.Id;
 
-    return await apiRequest("/ListaUsuario/add", "POST", {
+    const listResult = await apiRequest("/ListaUsuario/add", "POST", {
         data: {
             usuarioId: user.id,
             videojuegoId: videojuegoId,
@@ -90,6 +90,12 @@ async function addRawgGameToMyList(game) {
         pagination: null,
         filters: []
     });
+
+    if (typeof checkAndShowNewAchievements === "function") {
+        await checkAndShowNewAchievements();
+    }
+
+    return listResult;
 }
 
 function formatDateForBackend(dateValue) {
