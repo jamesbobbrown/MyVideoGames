@@ -161,6 +161,7 @@ function calculateAchievements(items, stats) {
 
 function renderProfile(user, stats, achievements, items, ranking) {
     const container = document.getElementById("profileContainer");
+    const userId = user.id;
     const username = user.username || user.email || "User";
     const firstLetter = username.charAt(0).toUpperCase();
 
